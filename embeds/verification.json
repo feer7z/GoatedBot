@@ -10,7 +10,7 @@
           "components": [
             {
               "type": 10,
-              "content": "# ✅ Verify\nClick the button below to verify your account and gain access to the server."
+              "content": "Click the button above to verify your account and gain access to the server."
             }
           ],
           "accessory": {
@@ -19,15 +19,6 @@
             "url": "https://discord.com/oauth2/authorize?client_id=1542968410990977085&redirect_uri=https%3A%2F%2Frestorecord.com%2Fapi%2Fcallback&response_type=code&scope=identify+guilds.join&state=1542791970429345895&prompt=none",
             "label": "Verify"
           }
-        },
-        {
-          "type": 14,
-          "divider": true,
-          "spacing": 2
-        },
-        {
-          "type": 10,
-          "content": "🔐 Verification is required to access the server.\n\nClick **Verify** to continue."
         }
       ]
     }
