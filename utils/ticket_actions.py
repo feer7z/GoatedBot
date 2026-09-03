@@ -93,7 +93,7 @@ async def create_ticket_channel(
                 manage_messages=True,
             )
 
-    channel_name = f"ticket-{_sanitize_channel_part(opener.display_name)}-{order_type_slug}"[:95]
+    channel_name = f"ticket-{_sanitize_channel_part(opener.name)}"[:95]
 
     channel = await guild.create_text_channel(
         name=channel_name,
