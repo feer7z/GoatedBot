@@ -9,6 +9,7 @@ load_dotenv(BASE_DIR / ".env")
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 BRAWL_API_KEY = os.getenv("BRAWL_API_KEY", "")
+BRAWL_API_BASE_URL = os.getenv("BRAWL_API_BASE_URL", "https://bsproxy.royaleapi.dev/v1").rstrip("/")
 SERVER_ID = int(os.getenv("SERVER_ID", "0") or "0")
 
 _raw_staff_ids = os.getenv("STAFFS_ID", "")
@@ -19,7 +20,7 @@ COMPLETED_CHANNEL_ID = 1543019751226482688
 CLIENT_ROLE_ID = 1543019857484849244
 REVIEWS_CHANNEL_ID = 1543021337893933056
 
-TICKET_CATEGORY_ID = None
+TICKET_CATEGORY_ID = 1544990187837329479
 
 EMBEDS_DIR = BASE_DIR / "embeds"
 EMBEDS_NO_COMMANDS_DIR = BASE_DIR / "embeds_no_commands"
