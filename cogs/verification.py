@@ -13,11 +13,22 @@ class Verification(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="verification", description="Post the account verification panel.")
+    @app_commands.command(
+        name="verification",
+        description="Post the account verification panel."
+    )
     @staff_only()
     async def verification(self, interaction: discord.Interaction) -> None:
-        view = load_layout_view(EMBEDS_DIR / "verification.json", timeout=None)
-        await interaction.response.send_message(view=view)
+        view = load_layout_view(
+            EMBEDS_DIR / "verification.json",
+            timeout=None
+        )
+
+        # Acknowledge the slash command privately
+        await interaction.response.defer(ephemeral=True)
+
+        # Publish only the verification panel in the channel
+        await interaction.channel.send(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:
