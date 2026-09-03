@@ -3,7 +3,7 @@
   "components": [
     {
       "type": 17,
-      "accent_color": 9516855,
+      "accent_color": 2067276,
       "components": [
         {
           "type": 10,
@@ -24,12 +24,17 @@
             {
               "type": 2,
               "style": 5,
-              "label": "Verify",
-              "url": "https://discord.com/oauth2/authorize?client_id=1542968410990977085&redirect_uri=https%3A%2F%2Frestorecord.com%2Fapi%2Fcallback&response_type=code&scope=identify+guilds.join&state=1542791970429345895&prompt=none"
+              "url": "https://discord.com/oauth2/authorize?client_id=1542968410990977085&redirect_uri=https%3A%2F%2Frestorecord.com%2Fapi%2Fcallback&response_type=code&scope=identify+guilds.join&state=1542791970429345895&prompt=none",
+              "custom_id": "p_342539825011757057",
+              "emoji": {
+                "name": "✅"
+              },
+              "label": "Verify"
             }
           ]
         }
-      ]
+      ],
+      "spoiler": false
     }
   ]
 }
