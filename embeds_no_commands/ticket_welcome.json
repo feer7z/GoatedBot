@@ -1,94 +1,62 @@
 {
-  "content": "",
-  "tts": false,
-  "embeds": [],
+  "flags": 32768,
   "components": [
     {
-      "id": 336529199,
       "type": 17,
+      "accent_color": 9516855,
       "components": [
         {
-          "id": 508747437,
           "type": 10,
           "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
         },
         {
-          "id": 42589647,
           "type": 14,
           "divider": true,
           "spacing": 2
         },
         {
-          "id": 115961097,
           "type": 10,
           "content": "## Welcome\nThanks for your order, {{opener_mention}}.\nDescribe what you need in detail — a staff member will be with you shortly.\nUse the buttons below to manage this ticket.\n\n{{booster_mention}}"
         },
         {
-          "id": 639642463,
           "type": 14,
           "divider": true,
           "spacing": 2
         },
         {
-          "id": 468965825,
           "type": 10,
           "content": "## Order Information\n{{summary_block}}"
         },
         {
-          "id": 85771337,
           "type": 1,
           "components": [
             {
-              "id": 906110784,
               "type": 2,
-              "style": 1,
-              "label": "Call a Booster",
-              "action_set_id": "364626987",
-              "disabled": false,
-              "emoji": {
-                "name": "🚀",
-                "animated": false
-              }
+              "style": 2,
+              "label": "Close Ticket",
+              "custom_id": "ticket_close"
             },
             {
-              "id": 848593117,
               "type": 2,
               "style": 3,
               "label": "Paid",
-              "action_set_id": "904403379",
-              "emoji": {
-                "name": "💸",
-                "animated": false
-              }
+              "custom_id": "ticket_paid"
             },
             {
-              "id": 608545569,
+              "type": 2,
+              "style": 1,
+              "label": "Ticket Completed",
+              "custom_id": "ticket_completed"
+            },
+            {
               "type": 2,
               "style": 2,
-              "label": "Boost Completed",
-              "action_set_id": "249656652",
-              "emoji": {
-                "name": "❕",
-                "animated": false
-              }
-            },
-            {
-              "id": 332174175,
-              "type": 2,
-              "style": 4,
-              "label": "Close Ticket",
-              "action_set_id": "127138085",
-              "emoji": {
-                "name": "❌",
-                "animated": false
-              }
+              "label": "Call a Booster",
+              "custom_id": "ticket_call_booster"
             }
           ]
         }
-      ],
-      "accent_color": 2067276
+      ]
     }
-  ],
-  "actions": {},
-  "flags": 32768
+  ]
 }
