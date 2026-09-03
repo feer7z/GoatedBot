@@ -44,7 +44,11 @@
               "style": 1,
               "label": "Call a Booster",
               "action_set_id": "364626987",
-              "disabled": false
+              "disabled": false,
+              "emoji": {
+                "name": "🚀",
+                "animated": false
+              }
             },
             {
               "id": 848593117,
@@ -61,8 +65,12 @@
               "id": 608545569,
               "type": 2,
               "style": 2,
-              "label": "Ticket Completed",
-              "action_set_id": "249656652"
+              "label": "Boost Completed",
+              "action_set_id": "249656652",
+              "emoji": {
+                "name": "❕",
+                "animated": false
+              }
             },
             {
               "id": 332174175,
