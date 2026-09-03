@@ -6,7 +6,7 @@ import aiohttp
 
 from config import BRAWL_API_KEY
 
-BASE_URL = "https://api.brawlstars.com/v1"
+BASE_URL = "https://bsproxy.royaleapi.dev/v1"
 POWER_ELEVEN_THRESHOLD = 11
 
 
