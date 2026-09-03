@@ -7,7 +7,7 @@
       "components": [
         {
           "type": 10,
-          "content": "## New Review\n**Client:** {{reviewer_mention}}\n**Order:** {{order_type}}\n**Rating:** {{stars_display}}\n\n{{comment_block}}"
+          "content": "## New Review\n**Client:** Anonymnous \n**Order:** {{order_type}}\n**Rating:** {{stars_display}}\n\n{{comment_block}}"
         }
       ]
     }
