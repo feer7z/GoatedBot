@@ -10,7 +10,7 @@ RANK_TIERS = [
     "Diamond I", "Diamond II", "Diamond III",
     "Mythic I", "Mythic II", "Mythic III",
     "Legendary I", "Legendary II", "Legendary III",
-    "Masters",
+    "Masters", "Pro"
 ]
 
 RANK_ALIASES = {
