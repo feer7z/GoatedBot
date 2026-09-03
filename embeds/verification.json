@@ -10,7 +10,7 @@
           "components": [
             {
               "type": 10,
-              "content": "Click the button above to verify your account and gain access to the server."
+              "content": "Click the button to verify your account and gain access to the server."
             }
           ],
           "accessory": {
