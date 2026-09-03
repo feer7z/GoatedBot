@@ -293,14 +293,15 @@ class Orders(commands.Cog):
     @staff_only()
     async def prestiges(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "prestiges.json", callbacks=prestige_panel_callbacks(), timeout=None)
-        await interaction.response.send_message(view=view)
-
+        await interaction.response.defer(ephemeral=True)
+        await interaction.channel.send(view=view)
+        
     @app_commands.command(name="other", description="Post the other services order panel.")
     @staff_only()
     async def other(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "other.json", callbacks=other_panel_callbacks(), timeout=None)
-        await interaction.response.send_message(view=view)
-
+        await interaction.response.defer(ephemeral=True)
+        await interaction.channel.send(view=view)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Orders(bot))
