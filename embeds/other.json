@@ -68,17 +68,11 @@
                     "animated": false
                   }
                 }
-              ],
-              "placeholder": "Choose a service...",
-              "flows": {},
-              "custom_id": "p_342545176243212289",
-              "min_values": 1,
-              "max_values": 1
+              ]
             }
           ]
         }
-      ],
-      "spoiler": false
+      ]
     }
   ]
 }
