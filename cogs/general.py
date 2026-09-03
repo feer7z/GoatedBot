@@ -15,7 +15,8 @@ class General(commands.Cog):
     @app_commands.command(name="ping", description="Check whether the bot is online.")
     async def ping(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "ping.json", timeout=None)
-        await interaction.response.send_message(view=view)
+        await interaction.response.defer(ephemeral=True)
+        await interaction.channel.send(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:
