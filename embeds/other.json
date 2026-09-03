@@ -23,6 +23,10 @@
           "components": [
             {
               "type": 3,
+              "custom_id": "order_other_select",
+              "placeholder": "Choose a service...",
+              "min_values": 1,
+              "max_values": 1,
               "options": [
                 {
                   "label": "Matcherino Winner Pin",
