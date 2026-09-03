@@ -3,11 +3,11 @@
   "components": [
     {
       "type": 17,
-      "accent_color": 9516855,
+      "accent_color": 2067276,
       "components": [
         {
           "type": 10,
-          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
+          "content": "# Goated Boost\nFast & reliable Brawl Stars Boosting."
         },
         {
           "type": 14,
@@ -23,41 +23,58 @@
           "components": [
             {
               "type": 3,
-              "custom_id": "order_other_select",
-              "placeholder": "Choose a service...",
-              "min_values": 1,
-              "max_values": 1,
               "options": [
                 {
-                  "label": "Matcherino Pin",
+                  "label": "Matcherino Winner Pin",
                   "value": "matcherino_pin",
-                  "description": "150€"
+                  "description": "The pin arrives as a voucher link.",
+                  "emoji": {
+                    "id": "1422978320076636261",
+                    "name": "unknown",
+                    "animated": false
+                  }
                 },
                 {
-                  "label": "Play Matcherino Tournament (tB+ team)",
+                  "label": "Play Matcherino Tournament",
                   "value": "matcherino_tournament",
-                  "description": "Custom quote"
+                  "description": "With a tB+ team, following Brawl Hub criteria.",
+                  "emoji": {
+                    "id": "1544948966351704175",
+                    "name": "unknown",
+                    "animated": false
+                  }
                 },
                 {
                   "label": "Championship Challenge — 15 Wins",
                   "value": "championship_challenge",
-                  "description": "5€"
+                  "description": "Get to 15 wins without losing a single round.",
+                  "emoji": {
+                    "id": "1544950855848042496",
+                    "name": "unknown",
+                    "animated": false
+                  }
                 },
                 {
                   "label": "Winstreak Boost",
                   "value": "winstreak_boost",
-                  "description": "Starting from 5€"
-                },
-                {
-                  "label": "Other Request",
-                  "value": "other_request",
-                  "description": "Tell us what you need"
+                  "description": "From 50 to 1000 cheap winstreak.",
+                  "emoji": {
+                    "id": "1544950478872379452",
+                    "name": "unknown",
+                    "animated": false
+                  }
                 }
-              ]
+              ],
+              "placeholder": "Choose a service...",
+              "flows": {},
+              "custom_id": "p_342545176243212289",
+              "min_values": 1,
+              "max_values": 1
             }
           ]
         }
-      ]
+      ],
+      "spoiler": false
     }
   ]
 }
