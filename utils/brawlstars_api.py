@@ -4,9 +4,8 @@ from urllib.parse import quote
 
 import aiohttp
 
-from config import BRAWL_API_KEY
+from config import BRAWL_API_BASE_URL, BRAWL_API_KEY
 
-BASE_URL = "https://bsproxy.royaleapi.dev/"
 POWER_ELEVEN_THRESHOLD = 11
 
 
@@ -41,7 +40,7 @@ class BrawlStarsClient:
 
     async def get_player(self, raw_tag: str) -> dict:
         session = await self._get_session()
-        url = f"{BASE_URL}/players/{encode_tag(raw_tag)}"
+        url = f"{BRAWL_API_BASE_URL}/players/{encode_tag(raw_tag)}"
         async with session.get(url) as response:
             if response.status == 200:
                 return await response.json()
@@ -49,8 +48,9 @@ class BrawlStarsClient:
                 raise BrawlStarsAPIError("Player not found. Double check the player tag.")
             if response.status == 403:
                 raise BrawlStarsAPIError(
-                    "The Brawl Stars API rejected this request. The API key may be invalid "
-                    "or not allow-listed for this server's current IP address."
+                    "The Brawl Stars API rejected this request (403). The API key is likely not "
+                    "allow-listed for the IP address making the request. If BRAWL_API_BASE_URL points "
+                    "at bsproxy.royaleapi.dev, whitelist 45.79.218.79 on the key instead of this server's IP."
                 )
             if response.status == 429:
                 raise BrawlStarsAPIError("The Brawl Stars API rate limit was reached. Try again shortly.")
@@ -58,7 +58,7 @@ class BrawlStarsClient:
 
     async def get_brawler(self, brawler_id_or_name: str) -> dict:
         session = await self._get_session()
-        url = f"{BASE_URL}/brawlers/{quote(str(brawler_id_or_name))}"
+        url = f"{BRAWL_API_BASE_URL}/brawlers/{quote(str(brawler_id_or_name))}"
         async with session.get(url) as response:
             if response.status == 200:
                 return await response.json()
