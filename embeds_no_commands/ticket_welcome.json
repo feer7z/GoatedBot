@@ -1,0 +1,62 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 2
+        },
+        {
+          "type": 10,
+          "content": "## Welcome\nThanks for your order, {{opener_mention}}.\nDescribe what you need in detail — a staff member will be with you shortly.\nUse the buttons below to manage this ticket.\n\n{{booster_mention}}"
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 2
+        },
+        {
+          "type": 10,
+          "content": "## Order Information\n{{summary_block}}"
+        },
+        {
+          "type": 1,
+          "components": [
+            {
+              "type": 2,
+              "style": 2,
+              "label": "Close Ticket",
+              "custom_id": "ticket_close"
+            },
+            {
+              "type": 2,
+              "style": 3,
+              "label": "Paid",
+              "custom_id": "ticket_paid"
+            },
+            {
+              "type": 2,
+              "style": 1,
+              "label": "Ticket Completed",
+              "custom_id": "ticket_completed"
+            },
+            {
+              "type": 2,
+              "style": 2,
+              "label": "Call a Booster",
+              "custom_id": "ticket_call_booster"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

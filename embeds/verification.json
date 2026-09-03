@@ -1,0 +1,35 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting."
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 2
+        },
+        {
+          "type": 10,
+          "content": "## Verify Your Account\nClick the button below and authorize with Discord to gain access to the server. Verification is handled automatically — it only takes a few seconds."
+        },
+        {
+          "type": 1,
+          "components": [
+            {
+              "type": 2,
+              "style": 5,
+              "label": "Verify",
+              "url": "https://discord.com/oauth2/authorize?client_id=1542968410990977085&redirect_uri=https%3A%2F%2Frestorecord.com%2Fapi%2Fcallback&response_type=code&scope=identify+guilds.join&state=1542791970429345895&prompt=none"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

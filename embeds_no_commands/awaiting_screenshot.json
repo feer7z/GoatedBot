@@ -1,0 +1,15 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "## Almost Done!\n{{opener_mention}}, please upload a screenshot of the completed order in this channel.\nOnce received, it will be posted to our completed orders showcase and you will be asked to leave a review."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 2
+        },
+        {
+          "type": 9,
+          "components": [
+            {
+              "type": 10,
+              "content": "**Rank Carry (Duo)**\nA pro booster teams up with you in duo queue and carries every match. You stay on your own account the whole time."
+            }
+          ],
+          "accessory": {
+            "type": 2,
+            "style": 1,
+            "label": "Order",
+            "custom_id": "order_ranked_carry"
+          }
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 1
+        },
+        {
+          "type": 9,
+          "components": [
+            {
+              "type": 10,
+              "content": "**Rank Boost (Solo)**\nOne of our boosters plays directly on your account and pushes it to your desired Rank as fast as possible."
+            }
+          ],
+          "accessory": {
+            "type": 2,
+            "style": 1,
+            "label": "Order",
+            "custom_id": "order_ranked_boost"
+          }
+        }
+      ]
+    }
+  ]
+}

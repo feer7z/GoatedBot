@@ -1,0 +1,15 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "## New Review\n**Client:** {{reviewer_mention}}\n**Order:** {{order_type}}\n**Rating:** {{stars_display}}\n\n{{comment_block}}"
+        }
+      ]
+    }
+  ]
+}

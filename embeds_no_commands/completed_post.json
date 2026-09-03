@@ -1,0 +1,25 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "## Order Completed\n**Client:** {{client_mention}}\n**Service:** {{order_type}}"
+        },
+        {
+          "type": 12,
+          "items": [
+            {
+              "media": {
+                "url": "attachment://completed.png"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

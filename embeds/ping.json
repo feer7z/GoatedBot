@@ -1,0 +1,15 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "# Pong!\nThe bot is online and responding normally."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent
+
+load_dotenv(BASE_DIR / ".env")
+
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+BRAWL_API_KEY = os.getenv("BRAWL_API_KEY", "")
+SERVER_ID = int(os.getenv("SERVER_ID", "0") or "0")
+
+_raw_staff_ids = os.getenv("STAFFS_ID", "")
+STAFF_ROLE_IDS = [int(value) for value in _raw_staff_ids.replace(" ", "").split(",") if value]
+
+BOOSTER_ROLE_ID = 1543014635605590127
+COMPLETED_CHANNEL_ID = 1543019751226482688
+CLIENT_ROLE_ID = 1543019857484849244
+REVIEWS_CHANNEL_ID = 1543021337893933056
+
+TICKET_CATEGORY_ID = None
+
+EMBEDS_DIR = BASE_DIR / "embeds"
+EMBEDS_NO_COMMANDS_DIR = BASE_DIR / "embeds_no_commands"
+ASSETS_DIR = BASE_DIR / "assets"
+DATA_DIR = BASE_DIR / "data"
+WATERMARK_PATH = ASSETS_DIR / "watermark.png"
+TICKETS_FILE = DATA_DIR / "tickets.json"
+
+ACCENT_COLOR = 9516855
+CURRENCY_SYMBOL = "€"
+
+BRAND_NAME = "Goated Boost"
+BRAND_TAGLINE = "Fast & reliable Brawl Stars boosting."
+BRAND_SUBTITLE = "Rank pushes, trophies, mastery & more — safe, quick, and professional."

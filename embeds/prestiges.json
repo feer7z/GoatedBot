@@ -1,0 +1,55 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 9516855,
+      "components": [
+        {
+          "type": 10,
+          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 2
+        },
+        {
+          "type": 9,
+          "components": [
+            {
+              "type": 10,
+              "content": "**Prestige Boost (Solo)**\nA booster plays on your account to reach your desired Prestige level (P1, P2, P3+). Standard price."
+            }
+          ],
+          "accessory": {
+            "type": 2,
+            "style": 1,
+            "label": "Order",
+            "custom_id": "order_prestige_solo"
+          }
+        },
+        {
+          "type": 14,
+          "divider": true,
+          "spacing": 1
+        },
+        {
+          "type": 9,
+          "components": [
+            {
+              "type": 10,
+              "content": "**Prestige Carry (Duo)**\nYou play alongside a pro in duo to reach your desired Prestige level. You keep your account the entire time — price is 1.5x."
+            }
+          ],
+          "accessory": {
+            "type": 2,
+            "style": 1,
+            "label": "Order",
+            "custom_id": "order_prestige_duo"
+          }
+        }
+      ]
+    }
+  ]
+}
