@@ -29,7 +29,7 @@ DATA_DIR = BASE_DIR / "data"
 WATERMARK_PATH = ASSETS_DIR / "watermark.png"
 TICKETS_FILE = DATA_DIR / "tickets.json"
 
-ACCENT_COLOR = 1F8B4C
+ACCENT_COLOR = 9B59B6
 CURRENCY_SYMBOL = "€"
 
 BRAND_NAME = "Goated Boost"
