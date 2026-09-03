@@ -7,7 +7,7 @@
       "components": [
         {
           "type": 10,
-          "content": "## Order Completed\n**Client:** {{client_mention}}\n**Service:** {{order_type}}"
+          "content": "## Order Completed\n**Client:** Anonymnous\n**Service:** {{order_type}}"
         },
         {
           "type": 12,
