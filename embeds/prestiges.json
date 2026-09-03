@@ -60,7 +60,7 @@
           "items": [
             {
               "media": {
-                "url": "attachment://8838cde7-12c7-4e07-849e-4ad7fc41a667.png"
+                "url": "https://cdn.discordapp.com/attachments/1542867745425719337/1545111001471647935/8838cde7-12c7-4e07-849e-4ad7fc41a667.png?ex=6a9af441&is=6a99a2c1&hm=09f2eb28ef984f9f24763a270478242d850585d69878f1ec6322e6f9d2f62408&"
               }
             }
           ]
@@ -68,15 +68,5 @@
       ]
     }
   ],
-  "attachments": [
-    {
-      "id": "894221482255261",
-      "filename": "8838cde7-12c7-4e07-849e-4ad7fc41a667.png",
-      "content_type": "image/png",
-      "size": 647299,
-      "url": "blob:https://discohook.app/74081819-8d26-4c8c-855c-6f0877925dc3",
-      "proxy_url": "http://localhost",
-      "placement_count": 1
-    }
-  ]
+  "attachments": []
 }
