@@ -286,7 +286,8 @@ class Orders(commands.Cog):
     @staff_only()
     async def ranked(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "ranked.json", callbacks=ranked_panel_callbacks(), timeout=None)
-        await interaction.response.send_message(view=view)
+        await interaction.response.defer(ephemeral=True)
+        await interaction.channel.send(view=view)
 
     @app_commands.command(name="prestiges", description="Post the prestige boosting order panel.")
     @staff_only()
