@@ -6,13 +6,24 @@
       "accent_color": 2067276,
       "components": [
         {
-          "type": 10,
-          "content": "# 🎉 Giveaway 🎉h\n**Prize:** {{prize}}\n**Winners:** {{winner_count}}\n**Ends:** {{end_timestamp_display}}\n**Hosted by:** {{host_mention}}"
+          "type": 9,
+          "components": [
+            {
+              "type": 10,
+              "content": "# <:gw:1545312027453558865> Prize: {{prize}}\n**Winners:** {{winner_count}}\n**Ends:** {{end_timestamp_display}}\n"
+            }
+          ],
+          "accessory": {
+            "type": 11,
+            "media": {
+              "url": "https://cdn.discordapp.com/attachments/1544930311027040387/1545316616483381350/Diseno_sin_titulo.png?ex=6a9bb3bf&is=6a9a623f&hm=53accd4f98348610893fecbe276cb49ed28d314369f9da2258597a1d1de1c819&"
+            }
+          }
         },
         {
           "type": 14,
           "divider": true,
-          "spacing": 1
+          "spacing": 2
         },
         {
           "type": 10,
@@ -23,10 +34,10 @@
           "components": [
             {
               "type": 2,
-              "style": 1,
+              "style": 3,
               "emoji": {
                 "id": "1545312027453558865",
-                "name": "NOMBRE_REAL_DEL_EMOJI",
+                "name": "gw",
                 "animated": false
               },
               "custom_id": "giveaway_enter",
@@ -36,7 +47,8 @@
             }
           ]
         }
-      ]
+      ],
+      "spoiler": false
     }
   ]
 }
