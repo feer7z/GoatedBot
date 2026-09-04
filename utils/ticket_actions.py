@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import io
-import re
 
 import discord
 from discord import ui
@@ -12,31 +11,19 @@ from config import (
     BOOSTER_ROLE_ID,
     CLIENT_ROLE_ID,
     COMPLETED_CHANNEL_ID,
+    CURRENCY_SYMBOL,
     EMBEDS_NO_COMMANDS_DIR,
     REVIEWS_CHANNEL_ID,
     STAFF_ROLE_IDS,
     TICKET_CATEGORY_ID,
 )
 from utils import storage
+from utils.brawlstars_api import BrawlStarsAPIError, BrawlStarsClient, find_brawler
 from utils.layout_loader import CallbackMap, load_layout_view
 from utils.modal_helpers import add_text_field
 from utils.permissions import is_staff_member, member_has_role
+from utils.text_utils import build_notice_view, sanitize_channel_part
 from utils.watermark import WatermarkError, apply_watermark
-
-
-def _sanitize_channel_part(raw_value: str) -> str:
-    lowered = raw_value.strip().lower()
-    lowered = re.sub(r"[^a-z0-9]+", "-", lowered)
-    lowered = lowered.strip("-")
-    return lowered or "user"
-
-
-def _simple_notice_view(content: str) -> ui.LayoutView:
-    view = ui.LayoutView(timeout=None)
-    container = ui.Container(accent_color=ACCENT_COLOR)
-    container.add_item(ui.TextDisplay(content))
-    view.add_item(container)
-    return view
 
 
 async def create_ticket_channel(
@@ -44,6 +31,7 @@ async def create_ticket_channel(
     order_type: str,
     order_type_slug: str,
     summary_lines: list[str],
+    extra: dict | None = None,
 ) -> discord.TextChannel:
     guild = interaction.guild
     opener = interaction.user
@@ -93,7 +81,7 @@ async def create_ticket_channel(
                 manage_messages=True,
             )
 
-    channel_name = f"ticket-{_sanitize_channel_part(opener.name)}"[:95]
+    channel_name = f"ticket-{sanitize_channel_part(opener.display_name)}-{order_type_slug}"[:95]
 
     channel = await guild.create_text_channel(
         name=channel_name,
@@ -102,16 +90,16 @@ async def create_ticket_channel(
         reason=f"Order ticket opened by {opener} for {order_type}",
     )
 
-    await storage.create_ticket(
-        channel.id,
-        {
-            "opener_id": opener.id,
-            "order_type": order_type,
-            "status": "open",
-            "paid": False,
-            "claimed_by": None,
-        },
-    )
+    record = {
+        "opener_id": opener.id,
+        "order_type": order_type,
+        "status": "open",
+        "paid": False,
+        "claimed_by": None,
+    }
+    if extra:
+        record.update(extra)
+    await storage.create_ticket(channel.id, record)
 
     summary_block = "\n".join(summary_lines)
     welcome_view = load_layout_view(
@@ -138,17 +126,20 @@ async def send_order_confirmation(
     order_type: str,
     order_type_slug: str,
     summary_lines: list[str],
+    extra: dict | None = None,
 ) -> None:
     summary_block = "\n".join(summary_lines)
 
     async def on_confirm(confirm_interaction: discord.Interaction) -> None:
         await confirm_interaction.response.defer(ephemeral=True, thinking=True)
-        channel = await create_ticket_channel(confirm_interaction, order_type, order_type_slug, summary_lines)
+        channel = await create_ticket_channel(
+            confirm_interaction, order_type, order_type_slug, summary_lines, extra,
+        )
         await confirm_interaction.followup.send(f"Your ticket has been created: {channel.mention}", ephemeral=True)
 
     async def on_cancel(cancel_interaction: discord.Interaction) -> None:
         await cancel_interaction.response.edit_message(
-            view=_simple_notice_view("Order cancelled. Feel free to start a new order any time."),
+            view=build_notice_view("Order cancelled. Feel free to start a new order any time."),
         )
 
     view = load_layout_view(
@@ -168,7 +159,7 @@ async def _handle_ticket_close(interaction: discord.Interaction) -> None:
     async def on_confirm(confirm_interaction: discord.Interaction) -> None:
         channel = confirm_interaction.channel
         await confirm_interaction.response.edit_message(
-            view=_simple_notice_view("Closing this ticket in a few seconds..."),
+            view=build_notice_view("Closing this ticket in a few seconds..."),
         )
         if isinstance(channel, discord.TextChannel):
             await storage.delete_ticket(channel.id)
@@ -176,7 +167,7 @@ async def _handle_ticket_close(interaction: discord.Interaction) -> None:
             await channel.delete(reason=f"Ticket closed by {confirm_interaction.user}")
 
     async def on_cancel(cancel_interaction: discord.Interaction) -> None:
-        await cancel_interaction.response.edit_message(view=_simple_notice_view("Close cancelled."))
+        await cancel_interaction.response.edit_message(view=build_notice_view("Close cancelled."))
 
     view = ui.LayoutView(timeout=60)
     container = ui.Container(accent_color=ACCENT_COLOR)
@@ -269,7 +260,7 @@ async def _handle_ticket_call_booster(interaction: discord.Interaction) -> None:
     mention = booster_role.mention if booster_role else "the booster team"
 
     await interaction.response.send_message(
-        view=_simple_notice_view(f"{mention} — assistance requested on this ticket."),
+        view=build_notice_view(f"{mention} — assistance requested on this ticket."),
         allowed_mentions=discord.AllowedMentions(roles=True, everyone=False),
     )
 
@@ -301,12 +292,63 @@ async def _handle_ticket_accept_job(interaction: discord.Interaction) -> None:
     await storage.update_ticket(channel.id, claimed_by=member.id)
 
     await interaction.response.edit_message(
-        view=_simple_notice_view(f"## Job Accepted\n{member.mention} is now working on this order."),
+        view=build_notice_view(f"## Job Accepted\n{member.mention} is now working on this order."),
     )
 
 
 def paid_callbacks() -> CallbackMap:
     return {"ticket_accept_job": _handle_ticket_accept_job}
+
+
+_PENDING_COMPLETION_IMAGES: dict[int, bytes] = {}
+
+
+def _format_price(value: float | None) -> str:
+    if value is None:
+        return "To be confirmed by staff"
+    return f"{value:.2f}{CURRENCY_SYMBOL}"
+
+
+def _build_completion_summary(
+    ticket: dict,
+    booster_mention: str,
+    buyer_display: str,
+    current_trophies: int | None,
+) -> str:
+    lines = [
+        f"**Buyer** — {buyer_display}",
+        f"**Service** — {ticket.get('order_type', 'Boost')}",
+        f"**Price** — {_format_price(ticket.get('price'))}",
+        f"**Payment Method** — {ticket.get('payment_method') or 'N/A'}",
+    ]
+    if ticket.get("brawler_name"):
+        lines.append(f"**Brawler** — {ticket['brawler_name']}")
+    if ticket.get("starting_trophies") is not None:
+        lines.append(f"**Starting Trophies** — {ticket['starting_trophies']:,}")
+    if current_trophies is not None:
+        lines.append(f"**Current Trophies** — {current_trophies:,}")
+    lines.append(f"**Booster** — {booster_mention}")
+    return "\n".join(lines)
+
+
+async def _fetch_current_trophies(ticket: dict) -> int | None:
+    player_tag = ticket.get("player_tag")
+    brawler_name = ticket.get("brawler_name")
+    if not player_tag or not brawler_name:
+        return None
+
+    client = BrawlStarsClient()
+    try:
+        player = await client.get_player(player_tag)
+    except BrawlStarsAPIError:
+        return None
+    finally:
+        await client.close()
+
+    brawler = find_brawler(player, brawler_name)
+    if brawler is None:
+        return None
+    return brawler.get("trophies")
 
 
 async def process_completion_screenshot(message: discord.Message) -> None:
@@ -336,52 +378,127 @@ async def process_completion_screenshot(message: discord.Message) -> None:
         await message.channel.send("Could not process that image. Please try uploading it again.")
         return
 
-    order_type = ticket.get("order_type", "Boost")
+    _PENDING_COMPLETION_IMAGES[message.channel.id] = watermarked_bytes
+    await storage.update_ticket(message.channel.id, status="awaiting_visibility_choice")
+
     opener = message.guild.get_member(ticket["opener_id"])
     opener_mention = opener.mention if opener else message.author.mention
 
-    completed_channel = message.guild.get_channel(COMPLETED_CHANNEL_ID)
+    async def on_show_name(interaction: discord.Interaction) -> None:
+        await _finalize_completion(interaction, show_name=True)
+
+    async def on_stay_anonymous(interaction: discord.Interaction) -> None:
+        await _finalize_completion(interaction, show_name=False)
+
+    view = ui.LayoutView(timeout=None)
+    container = ui.Container(accent_color=ACCENT_COLOR)
+    container.add_item(
+        ui.TextDisplay(
+            f"## One Last Thing\n{opener_mention}, should we show your Discord name next to this order in "
+            "our showcase, or would you rather stay anonymous?"
+        )
+    )
+    row = ui.ActionRow()
+    show_button = ui.Button(style=discord.ButtonStyle.primary, label="Show My Name", custom_id="completion_show_name")
+    show_button.callback = on_show_name
+    anon_button = ui.Button(
+        style=discord.ButtonStyle.secondary, label="Stay Anonymous", custom_id="completion_stay_anonymous",
+    )
+    anon_button.callback = on_stay_anonymous
+    row.add_item(show_button)
+    row.add_item(anon_button)
+    container.add_item(row)
+    view.add_item(container)
+
+    await message.channel.send(view=view, allowed_mentions=discord.AllowedMentions(users=True))
+    await message.reply("Thanks! Your screenshot has been received.", mention_author=False)
+
+
+async def _finalize_completion(interaction: discord.Interaction, show_name: bool) -> None:
+    channel = interaction.channel
+    if not isinstance(channel, discord.TextChannel) or channel.guild is None:
+        return
+    guild = channel.guild
+
+    ticket = await storage.get_ticket(channel.id)
+    if ticket is None or ticket.get("status") != "awaiting_visibility_choice":
+        await interaction.response.send_message("This step has already been completed.", ephemeral=True)
+        return
+
+    if interaction.user.id != ticket.get("opener_id"):
+        await interaction.response.send_message(
+            "Only the client who opened this ticket can make this choice.", ephemeral=True,
+        )
+        return
+
+    watermarked_bytes = _PENDING_COMPLETION_IMAGES.pop(channel.id, None)
+    if watermarked_bytes is None:
+        await interaction.response.send_message(
+            "I couldn't find the pending screenshot — please ask staff to click Ticket Completed again.",
+            ephemeral=True,
+        )
+        return
+
+    await interaction.response.edit_message(view=build_notice_view("Thanks! Posting your completed order now..."))
+
+    opener = guild.get_member(ticket["opener_id"])
+    buyer_display = (opener.mention if opener else "A valued client") if show_name else "Anonymous Buyer"
+
+    booster_id = ticket.get("claimed_by")
+    booster = guild.get_member(booster_id) if booster_id else None
+    booster_mention = booster.mention if booster else "N/A"
+
+    current_trophies = await _fetch_current_trophies(ticket)
+    completion_summary = _build_completion_summary(ticket, booster_mention, buyer_display, current_trophies)
+
+    completed_channel = guild.get_channel(COMPLETED_CHANNEL_ID)
     if isinstance(completed_channel, discord.TextChannel):
         completed_view = load_layout_view(
             EMBEDS_NO_COMMANDS_DIR / "completed_post.json",
-            values={"client_mention": opener_mention, "order_type": order_type},
+            values={"completion_summary": completion_summary},
             timeout=None,
         )
         await completed_channel.send(
             view=completed_view,
             file=discord.File(io.BytesIO(watermarked_bytes), filename="completed.png"),
-            allowed_mentions=discord.AllowedMentions(users=True),
+            allowed_mentions=discord.AllowedMentions(users=bool(show_name)),
         )
 
     if opener is not None:
-        client_role = message.guild.get_role(CLIENT_ROLE_ID)
+        client_role = guild.get_role(CLIENT_ROLE_ID)
         if client_role is not None:
             try:
                 await opener.add_roles(client_role, reason="Completed a Goated Boost order")
             except discord.Forbidden:
                 pass
 
-    await storage.update_ticket(message.channel.id, status="completed")
+    await storage.update_ticket(
+        channel.id, status="completed", buyer_visibility="public" if show_name else "anonymous",
+    )
 
+    opener_mention = opener.mention if opener else "there"
     review_view = load_layout_view(
         EMBEDS_NO_COMMANDS_DIR / "review_prompt.json",
         values={"opener_mention": opener_mention},
         callbacks=review_prompt_callbacks(),
         timeout=None,
     )
-    await message.channel.send(
-        view=review_view,
-        allowed_mentions=discord.AllowedMentions(users=True),
-    )
-    await message.reply("Thanks! Your screenshot has been posted.", mention_author=False)
+    await channel.send(view=review_view, allowed_mentions=discord.AllowedMentions(users=True))
 
 
 class ReviewCommentModal(ui.Modal):
-    def __init__(self, stars: int, order_type: str, opener_id: int) -> None:
+    def __init__(
+        self,
+        stars: int,
+        order_type: str,
+        opener_id: int,
+        guild: discord.Guild | None = None,
+    ) -> None:
         super().__init__(title=f"Rate {stars} / 5 Stars")
         self.stars = stars
         self.order_type = order_type
         self.opener_id = opener_id
+        self.guild = guild
         self.comment = add_text_field(
             self,
             "Comment (optional)",
@@ -391,7 +508,9 @@ class ReviewCommentModal(ui.Modal):
         )
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        await _submit_review(interaction, self.stars, self.order_type, self.opener_id, self.comment.value)
+        await _submit_review(
+            interaction, self.stars, self.order_type, self.opener_id, self.comment.value, guild=self.guild,
+        )
 
 
 async def _handle_review_rate(interaction: discord.Interaction, stars: int) -> None:
@@ -415,9 +534,10 @@ async def _submit_review(
     order_type: str,
     opener_id: int,
     comment: str,
+    guild: discord.Guild | None = None,
 ) -> None:
-    guild = interaction.guild
-    reviews_channel = guild.get_channel(REVIEWS_CHANNEL_ID) if guild else None
+    target_guild = guild or interaction.guild
+    reviews_channel = target_guild.get_channel(REVIEWS_CHANNEL_ID) if target_guild else None
 
     stars_display = "★" * stars + "☆" * (5 - stars)
     comment_block = comment.strip() if comment and comment.strip() else "_No comment left._"
@@ -439,6 +559,40 @@ async def _submit_review(
         )
 
     await interaction.response.send_message("Thanks for your feedback!", ephemeral=True)
+
+
+def build_standalone_star_picker(opener_id: int, order_type: str, guild: discord.Guild | None = None) -> ui.LayoutView:
+    view = ui.LayoutView(timeout=None)
+    container = ui.Container(accent_color=ACCENT_COLOR)
+    container.add_item(
+        ui.TextDisplay(
+            "## How Was Your Experience?\nLet us know how we did! Pick a star rating below, then add an "
+            "optional comment."
+        )
+    )
+    row_low = ui.ActionRow()
+    row_high = ui.ActionRow()
+
+    for stars in range(6):
+        button = ui.Button(
+            style=discord.ButtonStyle.success if stars == 5 else discord.ButtonStyle.secondary,
+            label=f"{stars} \u2605",
+            custom_id=f"standalone_review_{stars}",
+        )
+
+        async def handler(interaction: discord.Interaction, stars: int = stars) -> None:
+            if interaction.user.id != opener_id:
+                await interaction.response.send_message("This survey isn't for you.", ephemeral=True)
+                return
+            await interaction.response.send_modal(ReviewCommentModal(stars, order_type, opener_id, guild=guild))
+
+        button.callback = handler
+        (row_low if stars < 5 else row_high).add_item(button)
+
+    container.add_item(row_low)
+    container.add_item(row_high)
+    view.add_item(container)
+    return view
 
 
 def review_prompt_callbacks() -> CallbackMap:

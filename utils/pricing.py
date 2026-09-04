@@ -10,7 +10,7 @@ RANK_TIERS = [
     "Diamond I", "Diamond II", "Diamond III",
     "Mythic I", "Mythic II", "Mythic III",
     "Legendary I", "Legendary II", "Legendary III",
-    "Masters", "Pro"
+    "Masters",
 ]
 
 RANK_ALIASES = {
@@ -37,7 +37,8 @@ RANK_ALIASES = {
 
 PRICE_PER_RANK_STEP = 3.5
 
-PRESTIGE_PRICE_PER_STEP = 12.0
+PRESTIGE_TROPHY_STEP = 1000
+PRICE_PER_PRESTIGE_TROPHY = 0.05
 PRESTIGE_DUO_MULTIPLIER = 1.5
 
 P11_DISCOUNT_TIERS = [
@@ -181,33 +182,38 @@ def parse_prestige_level(raw_value: str) -> int | None:
     return None
 
 
+def current_prestige_from_trophies(trophies: int) -> int:
+    return max(trophies, 0) // PRESTIGE_TROPHY_STEP
+
+
+def trophies_required_for_prestige(prestige_level: int) -> int:
+    return prestige_level * PRESTIGE_TROPHY_STEP
+
+
 def calculate_prestige_price(
-    start_prestige: int,
+    current_trophies: int,
     desired_prestige: int,
-    p11_brawler_count: int | None = None,
     is_duo_carry: bool = False,
 ) -> PriceBreakdown | None:
-    distance = desired_prestige - start_prestige
-    if distance <= 0:
+    trophies_needed = trophies_required_for_prestige(desired_prestige) - current_trophies
+    if trophies_needed <= 0:
         return None
 
-    base_price = distance * PRESTIGE_PRICE_PER_STEP
-    discount_rate = p11_discount_rate(p11_brawler_count)
+    base_price = trophies_needed * PRICE_PER_PRESTIGE_TROPHY
     multiplier = PRESTIGE_DUO_MULTIPLIER if is_duo_carry else 1.0
-    notes = []
+    notes = [f"{trophies_needed:,} trophies needed, calculated from the brawler's live trophy count."]
 
     if is_duo_carry:
         notes.append(f"Duo carry multiplier applied ({PRESTIGE_DUO_MULTIPLIER}x) — you keep your account.")
 
-    price_after_discount = base_price * (1 - discount_rate) * multiplier
-    final_price = max(price_after_discount, MINIMUM_ORDER_PRICE)
-
-    if discount_rate > 0:
-        notes.append(f"{discount_rate * 100:g}% off applied for {p11_brawler_count}+ Power 11 brawlers.")
+    raw_price = base_price * multiplier
+    final_price = max(raw_price, MINIMUM_ORDER_PRICE)
+    if final_price > raw_price:
+        notes.append("Minimum order price applied.")
 
     return PriceBreakdown(
         base_price=base_price,
-        discount_rate=discount_rate,
+        discount_rate=0.0,
         multiplier=multiplier,
         final_price=round(final_price, 2),
         notes=notes,
