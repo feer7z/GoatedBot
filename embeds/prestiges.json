@@ -7,19 +7,14 @@
       "components": [
         {
           "type": 10,
-          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
-        },
-        {
-          "type": 14,
-          "divider": true,
-          "spacing": 2
+          "content": "# Goated Boost - Prestiges\n"
         },
         {
           "type": 9,
           "components": [
             {
               "type": 10,
-              "content": "**Prestige Boost (Solo)**\nA booster plays on your account to reach your desired Prestige level (P1, P2, P3+). Standard price."
+              "content": "**Prestige Boost** \nA booster plays on your account to reach your desired prestige."
             }
           ],
           "accessory": {
@@ -42,7 +37,7 @@
           "components": [
             {
               "type": 10,
-              "content": "**Prestige Carry (Duo)**\nYou play alongside a pro in duo to reach your desired Prestige level. You keep your account the entire time — price is 1.5x."
+              "content": "**Prestige Carry**\nYou play alongside 2 Pros  to reach your desired prestige.— price is 1.5x."
             }
           ],
           "accessory": {
@@ -60,7 +55,7 @@
           "items": [
             {
               "media": {
-                "url": "https://cdn.discordapp.com/attachments/1542867745425719337/1545111001471647935/8838cde7-12c7-4e07-849e-4ad7fc41a667.png?ex=6a9af441&is=6a99a2c1&hm=09f2eb28ef984f9f24763a270478242d850585d69878f1ec6322e6f9d2f62408&"
+                "url": "https://cdn.discordapp.com/attachments/1542827467557834772/1545339828508565554/6e1cdffd-af29-49f8-8fbd-56221cc47b48.png?ex=6a9bc95e&is=6a9a77de&hm=f57d20b75ed78af2cae1e290301e36cbc012d783404b47579589fb880c543e48&"
               }
             }
           ]
