@@ -7,8 +7,10 @@ from discord import app_commands
 from discord.ext import commands
 
 from config import BOT_TOKEN, EMBEDS_DIR, EMBEDS_NO_COMMANDS_DIR, SERVER_ID
+from cogs.giveaways import giveaway_entry_callbacks
 from cogs.orders import other_panel_callbacks, prestige_panel_callbacks, ranked_panel_callbacks
 from utils.layout_loader import load_layout_view
+from utils.support_actions import support_panel_callbacks, support_ticket_callbacks
 from utils.ticket_actions import paid_callbacks, review_prompt_callbacks, ticket_welcome_callbacks
 
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +21,8 @@ INITIAL_EXTENSIONS = (
     "cogs.verification",
     "cogs.orders",
     "cogs.tickets",
+    "cogs.support",
+    "cogs.giveaways",
 )
 
 intents = discord.Intents.default()
@@ -47,6 +51,7 @@ class GoatedBot(commands.Bot):
         self.add_view(load_layout_view(EMBEDS_DIR / "ranked.json", callbacks=ranked_panel_callbacks(), timeout=None))
         self.add_view(load_layout_view(EMBEDS_DIR / "prestiges.json", callbacks=prestige_panel_callbacks(), timeout=None))
         self.add_view(load_layout_view(EMBEDS_DIR / "other.json", callbacks=other_panel_callbacks(), timeout=None))
+        self.add_view(load_layout_view(EMBEDS_DIR / "support.json", callbacks=support_panel_callbacks(), timeout=None))
 
         self.add_view(
             load_layout_view(
@@ -69,6 +74,28 @@ class GoatedBot(commands.Bot):
                 EMBEDS_NO_COMMANDS_DIR / "review_prompt.json",
                 values={"opener_mention": ""},
                 callbacks=review_prompt_callbacks(),
+                timeout=None,
+            )
+        )
+        self.add_view(
+            load_layout_view(
+                EMBEDS_NO_COMMANDS_DIR / "support_welcome.json",
+                values={"opener_mention": "", "topic": ""},
+                callbacks=support_ticket_callbacks(),
+                timeout=None,
+            )
+        )
+        self.add_view(
+            load_layout_view(
+                EMBEDS_NO_COMMANDS_DIR / "giveaway.json",
+                values={
+                    "prize": "",
+                    "winner_count": "",
+                    "end_timestamp_display": "",
+                    "host_mention": "",
+                    "entry_count": "",
+                },
+                callbacks=giveaway_entry_callbacks(),
                 timeout=None,
             )
         )
