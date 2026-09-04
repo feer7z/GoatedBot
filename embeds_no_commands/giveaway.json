@@ -7,7 +7,7 @@
       "components": [
         {
           "type": 10,
-          "content": "# 🎉 Giveaway 🎉\n**Prize:** {{prize}}\n**Winners:** {{winner_count}}\n**Ends:** {{end_timestamp_display}}\n**Hosted by:** {{host_mention}}"
+          "content": "# 🎉 Giveaway 🎉h\n**Prize:** {{prize}}\n**Winners:** {{winner_count}}\n**Ends:** {{end_timestamp_display}}\n**Hosted by:** {{host_mention}}"
         },
         {
           "type": 14,
@@ -22,17 +22,17 @@
           "type": 1,
           "components": [
             {
-              "style": 4,
               "type": 2,
+              "style": 1,
               "emoji": {
                 "id": "1545312027453558865",
-                "name": "unknown",
+                "name": "NOMBRE_REAL_DEL_EMOJI",
                 "animated": false
               },
+              "custom_id": "giveaway_enter",
               "flow": {
                 "actions": []
-              },
-              "custom_id": "p_342909492276498471"
+              }
             }
           ]
         }
