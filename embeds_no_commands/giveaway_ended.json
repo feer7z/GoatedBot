@@ -7,7 +7,7 @@
       "components": [
         {
           "type": 10,
-          "content": "# 🎉 Giveaway Ended 🎉\n**Prize:** {{prize}}\n**Winners:** {{winners_display}}\n\nEntries: **{{entry_count}}**"
+          "content": "# Giveaway ended!\n<:gw:1545319940993589331> **Prize:** {{prize}}\n<:wn:1545317648705781811> **Winners:** {{winners_display}}\n"
         }
       ]
     }
