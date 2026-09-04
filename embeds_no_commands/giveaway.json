@@ -6,19 +6,8 @@
       "accent_color": 2067276,
       "components": [
         {
-          "type": 9,
-          "components": [
-            {
-              "type": 10,
-              "content": "# <:gw:1545319940993589331> Prize: {{prize}}\n<:wn:1545317648705781811> **Winners:** {{winner_count}}\n<:ca:1545319752535113758> **Ends:** {{end_timestamp_display}}\n"
-            }
-          ],
-          "accessory": {
-            "type": 11,
-            "media": {
-              "url": "https://cdn.discordapp.com/attachments/1544930311027040387/1545316616483381350/Diseno_sin_titulo.png?ex=6a9bb3bf&is=6a9a623f&hm=53accd4f98348610893fecbe276cb49ed28d314369f9da2258597a1d1de1c819&"
-            }
-          }
+          "type": 10,
+          "content": "# <:gw:1545319940993589331> Prize: {{prize}}\n<:wn:1545317648705781811> **Winners:** {{winner_count}}\n<:ca:1545319752535113758> **Ends:** {{end_timestamp_display}}\n"
         },
         {
           "type": 14,
@@ -27,7 +16,7 @@
         },
         {
           "type": 10,
-          "content": "<:en:1545319253773910026> Entries: **{{entry_count}}**"
+          "content": "<:en:1545319253773910026> Entries: **{{entry_count}}**\n"
         },
         {
           "type": 1,
