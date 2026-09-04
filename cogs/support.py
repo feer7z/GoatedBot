@@ -18,8 +18,8 @@ class Support(commands.Cog):
     @staff_only()
     async def support(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "support.json", callbacks=support_panel_callbacks(), timeout=None)
-        await interaction.response.send_message(view=view)
-
+        await interaction.response.defer(ephemeral=True)
+        await interaction.channel.send(view=view)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Support(bot))
