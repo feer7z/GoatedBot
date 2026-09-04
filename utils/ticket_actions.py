@@ -325,8 +325,6 @@ def _build_completion_summary(
         lines.append(f"**Brawler** — {ticket['brawler_name']}")
     if ticket.get("starting_trophies") is not None:
         lines.append(f"**Starting Trophies** — {ticket['starting_trophies']:,}")
-    if current_trophies is not None:
-        lines.append(f"**Current Trophies** — {current_trophies:,}")
     lines.append(f"**Booster** — {booster_mention}")
     return "\n".join(lines)
 
