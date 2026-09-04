@@ -10,7 +10,7 @@
           "components": [
             {
               "type": 10,
-              "content": "# <:gw:1545312027453558865> Prize: {{prize}}\n**Winners:** {{winner_count}}\n**Ends:** {{end_timestamp_display}}\n"
+              "content": "# <:gw:1545319940993589331> Prize: {{prize}}\n<:wn:1545317648705781811> **Winners:** {{winner_count}}\n<:ca:1545319752535113758> **Ends:** {{end_timestamp_display}}\n"
             }
           ],
           "accessory": {
@@ -27,23 +27,24 @@
         },
         {
           "type": 10,
-          "content": "Entries: **{{entry_count}}**"
+          "content": "<:en:1545319253773910026> Entries: **{{entry_count}}**"
         },
         {
           "type": 1,
           "components": [
             {
-              "type": 2,
               "style": 3,
+              "type": 2,
+              "label": "Enter",
               "emoji": {
                 "id": "1545312027453558865",
                 "name": "gw",
                 "animated": false
               },
-              "custom_id": "giveaway_enter",
               "flow": {
                 "actions": []
-              }
+              },
+              "custom_id": "giveaway_enter"
             }
           ]
         }
