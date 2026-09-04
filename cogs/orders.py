@@ -5,7 +5,13 @@ from discord import app_commands
 from discord.ext import commands
 
 from config import CURRENCY_SYMBOL, EMBEDS_DIR
-from utils.brawlstars_api import BrawlStarsAPIError, BrawlStarsClient, count_power_eleven_brawlers, normalize_tag
+from utils.brawlstars_api import (
+    BrawlStarsAPIError,
+    BrawlStarsClient,
+    count_power_eleven_brawlers,
+    find_brawler,
+    normalize_tag,
+)
 from utils.layout_loader import CallbackMap, load_layout_view
 from utils.modal_helpers import add_text_field
 from utils.permissions import staff_only
@@ -13,10 +19,12 @@ from utils.pricing import (
     calculate_other_price,
     calculate_prestige_price,
     calculate_rank_price,
+    current_prestige_from_trophies,
     get_other_option,
     normalize_rank_input,
     parse_prestige_level,
     rank_distance,
+    trophies_required_for_prestige,
 )
 from utils.ticket_actions import send_order_confirmation
 
@@ -104,11 +112,16 @@ async def handle_ranked_submission(interaction: discord.Interaction, modal: Rank
     if modal.notes.value:
         summary_lines.append(f"**Notes** — {modal.notes.value}")
     if breakdown is not None:
-        summary_lines.append(f"**Estimated Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
+        summary_lines.append(f"**Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
         for note in breakdown.notes:
             summary_lines.append(f"-# {note}")
 
-    await send_order_confirmation(interaction, order_type, slug, summary_lines)
+    extra = {
+        "price": breakdown.final_price if breakdown is not None else None,
+        "payment_method": modal.payment_method.value,
+    }
+
+    await send_order_confirmation(interaction, order_type, slug, summary_lines, extra)
 
 
 class PrestigeOrderModal(discord.ui.Modal):
@@ -119,8 +132,8 @@ class PrestigeOrderModal(discord.ui.Modal):
         self.player_tag = add_text_field(
             self, "Brawl Stars Player Tag", placeholder="#ABC123XYZ", required=True, max_length=15,
         )
-        self.starting_prestige = add_text_field(
-            self, "Starting Prestige", placeholder="e.g. P1", required=True, max_length=10,
+        self.brawler_name = add_text_field(
+            self, "Brawler Name", placeholder="e.g. Spike", required=True, max_length=30,
         )
         self.desired_prestige = add_text_field(
             self, "Desired Prestige", placeholder="e.g. P3", required=True, max_length=10,
@@ -143,49 +156,73 @@ class PrestigeOrderModal(discord.ui.Modal):
 async def handle_prestige_submission(interaction: discord.Interaction, modal: PrestigeOrderModal) -> None:
     await interaction.response.defer(ephemeral=True, thinking=True)
 
-    starting_level = parse_prestige_level(modal.starting_prestige.value)
     desired_level = parse_prestige_level(modal.desired_prestige.value)
-
-    if starting_level is None or desired_level is None:
+    if desired_level is None:
         await interaction.followup.send(
-            "I couldn't recognize one of the Prestige levels you entered. Please use a format like `P1` and try again.",
+            "I couldn't recognize that Prestige level. Please use a format like `P3` and try again.",
             ephemeral=True,
         )
         return
 
-    if desired_level <= starting_level:
+    player, api_error = await _lookup_player(modal.player_tag.value)
+    if player is None:
         await interaction.followup.send(
-            "Your desired Prestige level needs to be higher than your starting level.", ephemeral=True,
+            f"I couldn't look up that account, so I can't calculate an exact price ({api_error}). "
+            "Please double check the player tag and try again.",
+            ephemeral=True,
         )
         return
 
-    player, api_error = await _lookup_player(modal.player_tag.value)
-    p11_count = count_power_eleven_brawlers(player) if player else None
-    breakdown = calculate_prestige_price(starting_level, desired_level, p11_count, modal.is_duo_carry)
+    brawler = find_brawler(player, modal.brawler_name.value)
+    if brawler is None:
+        await interaction.followup.send(
+            f"**{player.get('name', 'That account')}** doesn't seem to have a brawler named "
+            f'"{modal.brawler_name.value}" unlocked. Double check the spelling and try again.',
+            ephemeral=True,
+        )
+        return
+
+    current_trophies = brawler.get("trophies", 0)
+    breakdown = calculate_prestige_price(current_trophies, desired_level, modal.is_duo_carry)
+
+    if breakdown is None:
+        current_prestige = current_prestige_from_trophies(current_trophies)
+        await interaction.followup.send(
+            f"**{brawler.get('name', modal.brawler_name.value)}** is already at Prestige {current_prestige} "
+            f"({current_trophies:,} trophies) on that account, which is at or above P{desired_level}. "
+            "Pick a higher Prestige level.",
+            ephemeral=True,
+        )
+        return
 
     order_type = "Prestige Carry (Duo)" if modal.is_duo_carry else "Prestige Boost (Solo)"
     slug = "prestige-carry" if modal.is_duo_carry else "prestige-boost"
+    brawler_name = brawler.get("name", modal.brawler_name.value)
 
     summary_lines = [
         f"**Player Tag** — {normalize_tag(modal.player_tag.value)}",
-        f"**Starting Prestige** — P{starting_level}",
-        f"**Desired Prestige** — P{desired_level}",
+        f"**Account** — {player.get('name', 'Unknown')}",
+        f"**Brawler** — {brawler_name}",
+        f"**Current Trophies** — {current_trophies:,}",
+        f"**Desired Prestige** — P{desired_level} ({trophies_required_for_prestige(desired_level):,} trophies)",
         f"**Type** — {order_type}",
+        f"**Payment Method** — {modal.payment_method.value}",
     ]
-    if player is not None:
-        summary_lines.append(f"**Account** — {player.get('name', 'Unknown')} ({player.get('trophies', 0):,} trophies)")
-        summary_lines.append(f"**Power 11 Brawlers** — {p11_count}")
-    else:
-        summary_lines.append(f"**Account Lookup** — Unavailable ({api_error})")
-    summary_lines.append(f"**Payment Method** — {modal.payment_method.value}")
     if modal.notes.value:
         summary_lines.append(f"**Notes** — {modal.notes.value}")
-    if breakdown is not None:
-        summary_lines.append(f"**Estimated Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
-        for note in breakdown.notes:
-            summary_lines.append(f"-# {note}")
+    summary_lines.append(f"**Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
+    for note in breakdown.notes:
+        summary_lines.append(f"-# {note}")
 
-    await send_order_confirmation(interaction, order_type, slug, summary_lines)
+    extra = {
+        "price": breakdown.final_price,
+        "payment_method": modal.payment_method.value,
+        "brawler_name": brawler_name,
+        "starting_trophies": current_trophies,
+        "player_tag": normalize_tag(modal.player_tag.value),
+    }
+
+    await send_order_confirmation(interaction, order_type, slug, summary_lines, extra)
 
 
 class OtherOrderModal(discord.ui.Modal):
@@ -229,11 +266,16 @@ async def handle_other_submission(interaction: discord.Interaction, modal: Other
     summary_lines.append(f"**Payment Method** — {modal.payment_method.value}")
     if breakdown is not None:
         if breakdown.final_price > 0:
-            summary_lines.append(f"**Estimated Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
+            summary_lines.append(f"**Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
         for note in breakdown.notes:
             summary_lines.append(f"-# {note}")
 
-    await send_order_confirmation(interaction, order_type, slug, summary_lines)
+    extra = {
+        "price": breakdown.final_price if breakdown is not None and breakdown.final_price > 0 else None,
+        "payment_method": modal.payment_method.value,
+    }
+
+    await send_order_confirmation(interaction, order_type, slug, summary_lines, extra)
 
 
 async def _on_order_ranked_carry(interaction: discord.Interaction) -> None:
@@ -286,22 +328,20 @@ class Orders(commands.Cog):
     @staff_only()
     async def ranked(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "ranked.json", callbacks=ranked_panel_callbacks(), timeout=None)
-        await interaction.response.defer(ephemeral=True)
-        await interaction.channel.send(view=view)
+        await interaction.response.send_message(view=view)
 
     @app_commands.command(name="prestiges", description="Post the prestige boosting order panel.")
     @staff_only()
     async def prestiges(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "prestiges.json", callbacks=prestige_panel_callbacks(), timeout=None)
-        await interaction.response.defer(ephemeral=True)
-        await interaction.channel.send(view=view)
-        
+        await interaction.response.send_message(view=view)
+
     @app_commands.command(name="other", description="Post the other services order panel.")
     @staff_only()
     async def other(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "other.json", callbacks=other_panel_callbacks(), timeout=None)
-        await interaction.response.defer(ephemeral=True)
-        await interaction.channel.send(view=view)
+        await interaction.response.send_message(view=view)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Orders(bot))
