@@ -7,15 +7,33 @@
       "components": [
         {
           "type": 10,
-          "content": "# Goated Boost Support\nNeed help with an order, a payment issue, or something else? Open a ticket and our team will assist you as soon as possible."
+          "content": "# Goated Boost - Modmail\nNeed help with an order, a payment issue, or something else? Open a ticket and our team will assist you as soon as possible.\n "
+        },
+        {
+          "type": 12,
+          "items": [
+            {
+              "media": {
+                "url": "https://cdn.discordapp.com/attachments/1542827467557834772/1545325606948835338/41be85ff-a2c3-4f0f-b547-efd49a40fda0.png?ex=6a9bbc1f&is=6a9a6a9f&hm=f9f7765b6708c3988a6c3742ce60389693a033245dcdd219c17485d14cad4069&"
+              }
+            }
+          ]
         },
         {
           "type": 1,
           "components": [
             {
+              "style": 3,
               "type": 2,
-              "style": 1,
-              "label": "🎫 Open Ticket",
+              "label": "Open Ticket",
+              "emoji": {
+                "id": "1545319215278596097",
+                "name": "unknown",
+                "animated": false
+              },
+              "flow": {
+                "actions": []
+              },
               "custom_id": "support_open_ticket"
             }
           ]
