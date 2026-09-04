@@ -1,0 +1,15 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 2067276,
+      "components": [
+        {
+          "type": 10,
+          "content": "# 🎉 Giveaway Ended 🎉\n**Prize:** {{prize}}\n**Winners:** {{winners_display}}\n\nEntries: **{{entry_count}}**"
+        }
+      ]
+    }
+  ]
+}
