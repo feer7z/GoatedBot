@@ -22,10 +22,17 @@
           "type": 1,
           "components": [
             {
+              "style": 4,
               "type": 2,
-              "style": 1,
-              "label": "🎉 Enter Giveaway",
-              "custom_id": "giveaway_enter"
+              "emoji": {
+                "id": "1545312027453558865",
+                "name": "unknown",
+                "animated": false
+              },
+              "flow": {
+                "actions": []
+              },
+              "custom_id": "p_342909492276498471"
             }
           ]
         }
