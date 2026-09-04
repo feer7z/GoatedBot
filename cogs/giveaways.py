@@ -83,7 +83,7 @@ async def _end_giveaway(bot: commands.Bot, giveaway: dict) -> None:
 
     if winners:
         await channel.send(
-            f"🎉 Congratulations {winners_display}! You won **{giveaway['prize']}**.",
+            f"🎉 Congratulations {winners_display}! You won **{giveaway['prize']}**. Please open a ticket to claim <#1542807234520547451>",
             allowed_mentions=discord.AllowedMentions(users=True),
         )
     else:
