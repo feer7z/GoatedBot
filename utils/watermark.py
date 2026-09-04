@@ -32,9 +32,10 @@ def apply_watermark(source_bytes: bytes) -> bytes:
     watermark_resized = watermark_image.resize((target_width, target_height))
 
     padding = int(base_image.width * WATERMARK_PADDING_RATIO)
+
     position = (
-        base_image.width - watermark_resized.width - padding,
-        base_image.height - watermark_resized.height - padding,
+    padding,
+    base_image.height - watermark_resized.height - padding,
     )
 
     composed_image = base_image.copy()
