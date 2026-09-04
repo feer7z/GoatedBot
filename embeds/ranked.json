@@ -7,26 +7,21 @@
       "components": [
         {
           "type": 10,
-          "content": "# Goated Boost\nFast & reliable Brawl Stars boosting.\nRank pushes, trophies, mastery & more — safe, quick, and professional."
-        },
-        {
-          "type": 14,
-          "divider": true,
-          "spacing": 2
+          "content": "# Goated Boost - Ranked\n"
         },
         {
           "type": 9,
           "components": [
             {
               "type": 10,
-              "content": "**Rank Carry (Duo)**\nA pro booster teams up with you in duo queue and carries every match. You stay on your own account the whole time."
+              "content": "**Ranked Boost** \nA booster plays on your account to reach your desired rank."
             }
           ],
           "accessory": {
             "type": 2,
             "style": 3,
             "label": "Order",
-            "custom_id": "order_ranked_carry",
+            "custom_id": "order_prestige_solo",
             "flow": {
               "actions": []
             }
@@ -42,14 +37,14 @@
           "components": [
             {
               "type": 10,
-              "content": "**Rank Boost (Solo)**\nOne of our boosters plays directly on your account and pushes it to your desired Rank as fast as possible."
+              "content": "**Ranked Carry**\nYou play alongside 2 Pros  to reach your desired rank until Masters.— price is 1.5x."
             }
           ],
           "accessory": {
             "type": 2,
             "style": 3,
             "label": "Order",
-            "custom_id": "order_ranked_boost",
+            "custom_id": "order_prestige_duo",
             "flow": {
               "actions": []
             }
@@ -60,12 +55,13 @@
           "items": [
             {
               "media": {
-                "url": "https://cdn.discordapp.com/attachments/1542867745425719337/1545111001471647935/8838cde7-12c7-4e07-849e-4ad7fc41a667.png?ex=6a9af441&is=6a99a2c1&hm=09f2eb28ef984f9f24763a270478242d850585d69878f1ec6322e6f9d2f62408&"
+                "url": "https://media.discordapp.net/attachments/1542827467557834772/1545339692810108928/37d87f91-8612-4c68-811d-bc7005e1128b.png?ex=6a9bc93d&is=6a9a77bd&hm=ee73fd9310f683bbae22baa4c9e09110d50a8cfc7a2a509626400db4ab1aaf71&=&format=webp&quality=lossless"
               }
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "attachments": []
 }
