@@ -229,40 +229,69 @@ class OtherOrderModal(discord.ui.Modal):
     def __init__(self, option_key: str) -> None:
         option = get_other_option(option_key)
         label = option["label"] if option else "Other Request"
+
         super().__init__(title=f"Order: {label}"[:45])
+
         self.option_key = option_key
+
+        # Details SOLO para Winstreak Boost
+        if option_key == "winstreak_boost":
+            detail_label = option.get(
+                "detail_label",
+                "Desired winstreak (e.g. 10)",
+            )
+
+            self.detail = add_text_field(
+                self,
+                detail_label[:45],
+                style=discord.TextStyle.short,
+                required=True,
+                max_length=50,
+            )
+
+        # Payment Method para todos
         self.payment_method = add_text_field(
-            self, "Payment Method", placeholder="e.g. PayPal F&F", required=True, max_length=50,
+            self,
+            "Payment Method",
+            placeholder="e.g. PayPal F&F",
+            required=True,
+            max_length=50,
         )
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         await handle_other_submission(interaction, self)
-
-
-async def handle_other_submission(interaction: discord.Interaction, modal: OtherOrderModal) -> None:
+        
+async def handle_other_submission(
+    interaction: discord.Interaction,
+    modal: OtherOrderModal,
+) -> None:
     await interaction.response.defer(ephemeral=True, thinking=True)
 
     option = get_other_option(modal.option_key)
     order_type = option["label"] if option else "Other Request"
-    slug = modal.option_key.replace("_", "-")
 
-    breakdown = calculate_other_price(modal.option_key)
+    # Details solo existe para Winstreak
+    detail_text = ""
+    if modal.option_key == "winstreak_boost":
+        detail_text = modal.detail.value
 
-    summary_lines = [f"**Service** — {order_type}"]
-    if modal.player_tag.value.strip():
-        summary_lines.append(f"**Player Tag** — {normalize_tag(modal.player_tag.value)}")
-    summary_lines.append(f"**Details** — {modal.detail.value}")
-    summary_lines.append(f"**Payment Method** — {modal.payment_method.value}")
-    if breakdown is not None:
-        if breakdown.final_price > 0:
-            summary_lines.append(f"**Price** — {breakdown.formatted(CURRENCY_SYMBOL)}")
-        for note in breakdown.notes:
-            summary_lines.append(f"-# {note}")
+    breakdown = calculate_other_price(
+        modal.option_key,
+        detail_text,
+    )
 
-    extra = {
-        "price": breakdown.final_price if breakdown is not None and breakdown.final_price > 0 else None,
-        "payment_method": modal.payment_method.value,
-    }
+    summary_lines = [
+        f"**Service** — {order_type}",
+    ]
+
+    if modal.option_key == "winstreak_boost":
+        summary_lines.append(
+            f"**Details** — {detail_text}"
+        )
+
+    summary_lines.append(
+        f"**Payment Method** — {modal.payment_method.value}"
+    )
 
     await send_order_confirmation(interaction, order_type, slug, summary_lines, extra)
 
