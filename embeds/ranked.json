@@ -21,7 +21,7 @@
             "type": 2,
             "style": 3,
             "label": "Order",
-            "custom_id": "order_prestige_solo",
+            "custom_id": "order_ranked_solo",
             "flow": {
               "actions": []
             }
@@ -44,7 +44,7 @@
             "type": 2,
             "style": 3,
             "label": "Order",
-            "custom_id": "order_prestige_duo",
+            "custom_id": "order_ranked_duo",
             "flow": {
               "actions": []
             }
