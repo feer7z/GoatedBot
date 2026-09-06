@@ -234,7 +234,7 @@ class OtherOrderModal(discord.ui.Modal):
         self.player_tag = add_text_field(
             self, "Brawl Stars Player Tag (optional)", placeholder="#ABC123XYZ", required=False, max_length=15,
         )
-        detail_label = option["detail_label"] if option else "Describe exactly what you need"
+        detail_label = option.get("detail_label", "Describe exactly what you need")
         self.detail = add_text_field(
             self,
             detail_label[:45],
