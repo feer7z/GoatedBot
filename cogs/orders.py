@@ -231,17 +231,6 @@ class OtherOrderModal(discord.ui.Modal):
         label = option["label"] if option else "Other Request"
         super().__init__(title=f"Order: {label}"[:45])
         self.option_key = option_key
-        self.player_tag = add_text_field(
-            self, "Brawl Stars Player Tag (optional)", placeholder="#ABC123XYZ", required=False, max_length=15,
-        )
-        detail_label = option.get("detail_label", "Describe exactly what you need")
-        self.detail = add_text_field(
-            self,
-            detail_label[:45],
-            style=discord.TextStyle.paragraph,
-            required=True,
-            max_length=300,
-        )
         self.payment_method = add_text_field(
             self, "Payment Method", placeholder="e.g. PayPal F&F", required=True, max_length=50,
         )
