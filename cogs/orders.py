@@ -246,7 +246,7 @@ async def handle_other_submission(interaction: discord.Interaction, modal: Other
     order_type = option["label"] if option else "Other Request"
     slug = modal.option_key.replace("_", "-")
 
-    breakdown = calculate_other_price(modal.option_key, modal.detail.value)
+    breakdown = calculate_other_price(modal.option_key)
 
     summary_lines = [f"**Service** — {order_type}"]
     if modal.player_tag.value.strip():
