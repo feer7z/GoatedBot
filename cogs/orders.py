@@ -23,7 +23,6 @@ from utils.pricing import (
     get_other_option,
     normalize_rank_input,
     parse_prestige_level,
-    rank_distance,
     trophies_required_for_prestige,
 )
 from utils.ticket_actions import send_order_confirmation
@@ -108,15 +107,6 @@ async def handle_ranked_submission(
         await interaction.followup.send(
             "I couldn't recognize one of the ranks you entered. "
             "Please use a format like `Diamond II` or `Legendary I` and try again.",
-            ephemeral=True,
-        )
-        return
-
-    distance = rank_distance(starting_rank, desired_rank)
-
-    if distance is None or distance <= 0:
-        await interaction.followup.send(
-            "Your desired rank needs to be higher than your starting rank.",
             ephemeral=True,
         )
         return
