@@ -252,6 +252,9 @@ RANK_ALIASES = {
 
 PRICE_PER_RANK_STEP = 3.5
 
+VICTORY_MILESTONE_STEP = 100
+PRICE_PER_VICTORY_MILESTONE = 15.0
+
 PRESTIGE_TROPHY_STEP = 1000
 PRICE_PER_PRESTIGE_TROPHY = 0.05
 PRESTIGE_DUO_MULTIPLIER = 1.5
@@ -433,6 +436,24 @@ def calculate_prestige_price(
         multiplier=multiplier,
         final_price=round(final_price, 2),
         notes=notes,
+    )
+
+
+
+def calculate_victory_milestone_price(current_victories: int) -> tuple[int, PriceBreakdown]:
+    current_victories = max(int(current_victories), 0)
+    target_victories = ((current_victories // VICTORY_MILESTONE_STEP) + 1) * VICTORY_MILESTONE_STEP
+    final_price = PRICE_PER_VICTORY_MILESTONE
+
+    return target_victories, PriceBreakdown(
+        base_price=final_price,
+        discount_rate=0.0,
+        multiplier=1.0,
+        final_price=round(final_price, 2),
+        notes=[
+            f"{target_victories - current_victories:,} victories needed.",
+            f"Price calculated at {PRICE_PER_VICTORY_MILESTONE:.2f}€ per {VICTORY_MILESTONE_STEP} victories.",
+        ],
     )
 
 
