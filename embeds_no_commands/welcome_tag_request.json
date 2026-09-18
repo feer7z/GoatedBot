@@ -1,0 +1,26 @@
+{
+  "flags": 32768,
+  "components": [
+    {
+      "type": 17,
+      "accent_color": 2067276,
+      "components": [
+        {
+          "type": 10,
+          "content": "# Welcome to Goated Boost!\nWant to see the cheapest way to start improving your account? Give us your Brawl Stars player tag and we'll show you a few personalized offers, picked just for you."
+        },
+        {
+          "type": 1,
+          "components": [
+            {
+              "type": 2,
+              "style": 1,
+              "label": "Show Me Offers",
+              "custom_id": "welcome_show_offers"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
