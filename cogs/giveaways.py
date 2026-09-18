@@ -16,6 +16,13 @@ def _entry_count_text(entries: list[int]) -> str:
     return str(len(entries))
 
 
+def _requirement_line(giveaway: dict) -> str:
+    role_id = giveaway.get("required_role_id")
+    if not role_id:
+        return ""
+    return f"\n**Requirement:** Must have the <@&{role_id}> role"
+
+
 def _render_giveaway_view(giveaway: dict) -> discord.ui.LayoutView:
     end_display = f"<t:{int(giveaway['end_timestamp'])}:R>"
     return load_layout_view(
@@ -26,6 +33,7 @@ def _render_giveaway_view(giveaway: dict) -> discord.ui.LayoutView:
             "end_timestamp_display": end_display,
             "host_mention": f"<@{giveaway['host_id']}>",
             "entry_count": _entry_count_text(giveaway["entries"]),
+            "requirement_line": _requirement_line(giveaway),
         },
         callbacks=giveaway_entry_callbacks(),
         timeout=None,
@@ -41,6 +49,14 @@ async def _handle_giveaway_enter(interaction: discord.Interaction) -> None:
     if giveaway is None or giveaway.get("ended"):
         await interaction.response.send_message("This giveaway has ended.", ephemeral=True)
         return
+
+    required_role_id = giveaway.get("required_role_id")
+    if required_role_id and isinstance(interaction.user, discord.Member):
+        if not any(role.id == required_role_id for role in interaction.user.roles):
+            await interaction.response.send_message(
+                f"You need the <@&{required_role_id}> role to enter this giveaway.", ephemeral=True,
+            )
+            return
 
     added = await add_entry(message.id, interaction.user.id)
     if not added:
@@ -83,7 +99,7 @@ async def _end_giveaway(bot: commands.Bot, giveaway: dict) -> None:
 
     if winners:
         await channel.send(
-            f"🎉 Congratulations {winners_display}! You won **{giveaway['prize']}**. Please open a ticket to claim <#1542807234520547451>",
+            f"🎉 Congratulations {winners_display}! You won **{giveaway['prize']}**.",
             allowed_mentions=discord.AllowedMentions(users=True),
         )
     else:
@@ -114,6 +130,7 @@ class Giveaways(commands.Cog):
         prize="What are you giving away?",
         duration="e.g. 1h, 30m, 2d, 1d12h",
         winners="Number of winners",
+        required_role="Only members with this role can enter (optional)",
     )
     @staff_only()
     async def giveaway(
@@ -122,6 +139,7 @@ class Giveaways(commands.Cog):
         prize: str,
         duration: str,
         winners: app_commands.Range[int, 1, 20] = 1,
+        required_role: discord.Role | None = None,
     ) -> None:
         seconds = parse_duration(duration)
         if seconds is None:
@@ -139,6 +157,7 @@ class Giveaways(commands.Cog):
             "host_id": interaction.user.id,
             "entries": [],
             "ended": False,
+            "required_role_id": required_role.id if required_role is not None else None,
         }
 
         await interaction.response.send_message(view=_render_giveaway_view(record))
