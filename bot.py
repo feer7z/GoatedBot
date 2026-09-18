@@ -11,7 +11,13 @@ from cogs.giveaways import giveaway_entry_callbacks
 from cogs.orders import other_panel_callbacks, prestige_panel_callbacks, ranked_panel_callbacks
 from utils.layout_loader import load_layout_view
 from utils.support_actions import support_panel_callbacks, support_ticket_callbacks
-from utils.ticket_actions import paid_callbacks, review_prompt_callbacks, ticket_welcome_callbacks
+from utils.ticket_actions import (
+    paid_callbacks,
+    pending_ticket_callbacks,
+    review_prompt_callbacks,
+    ticket_welcome_callbacks,
+)
+from utils.welcome_offers import welcome_panel_callbacks
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("goatedbot")
@@ -23,6 +29,7 @@ INITIAL_EXTENSIONS = (
     "cogs.tickets",
     "cogs.support",
     "cogs.giveaways",
+    "cogs.welcome",
 )
 
 intents = discord.Intents.default()
@@ -48,6 +55,13 @@ class GoatedBot(commands.Bot):
             await self.tree.sync()
 
     def _register_persistent_views(self) -> None:
+        self.add_view(
+            load_layout_view(
+                EMBEDS_NO_COMMANDS_DIR / "welcome_tag_request.json",
+                callbacks=welcome_panel_callbacks(),
+                timeout=None,
+            )
+        )
         self.add_view(load_layout_view(EMBEDS_DIR / "ranked.json", callbacks=ranked_panel_callbacks(), timeout=None))
         self.add_view(load_layout_view(EMBEDS_DIR / "prestiges.json", callbacks=prestige_panel_callbacks(), timeout=None))
         self.add_view(load_layout_view(EMBEDS_DIR / "other.json", callbacks=other_panel_callbacks(), timeout=None))
@@ -58,6 +72,14 @@ class GoatedBot(commands.Bot):
                 EMBEDS_NO_COMMANDS_DIR / "ticket_welcome.json",
                 values={"opener_mention": "", "booster_mention": "", "summary_block": ""},
                 callbacks=ticket_welcome_callbacks(),
+                timeout=None,
+            )
+        )
+        self.add_view(
+            load_layout_view(
+                EMBEDS_NO_COMMANDS_DIR / "ticket_welcome_pending.json",
+                values={"opener_mention": "", "booster_mention": "", "order_type": ""},
+                callbacks=pending_ticket_callbacks(),
                 timeout=None,
             )
         )
