@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+from typing import Awaitable, Callable
 
 import discord
 from discord import ui
@@ -27,17 +28,14 @@ from utils.watermark import WatermarkError, apply_watermark
 
 
 async def create_ticket_channel(
-    interaction: discord.Interaction,
+    guild: discord.Guild,
+    opener: discord.Member,
     order_type: str,
     order_type_slug: str,
     summary_lines: list[str],
     extra: dict | None = None,
+    pending: bool = False,
 ) -> discord.TextChannel:
-    guild = interaction.guild
-    opener = interaction.user
-    if guild is None or not isinstance(opener, discord.Member):
-        raise RuntimeError("Ticket creation requires a guild context.")
-
     category = None
     if TICKET_CATEGORY_ID is not None:
         maybe_category = guild.get_channel(TICKET_CATEGORY_ID)
@@ -96,16 +94,72 @@ async def create_ticket_channel(
         "status": "open",
         "paid": False,
         "claimed_by": None,
+        "pending_form": pending,
     }
     if extra:
         record.update(extra)
+
+    booster_mention = booster_role.mention if booster_role else "the booster team"
+
+    if pending:
+        welcome_view = load_layout_view(
+            EMBEDS_NO_COMMANDS_DIR / "ticket_welcome_pending.json",
+            values={
+                "opener_mention": opener.mention,
+                "booster_mention": booster_mention,
+                "order_type": order_type,
+            },
+            callbacks=pending_ticket_callbacks(),
+            timeout=None,
+        )
+    else:
+        summary_block = "\n".join(summary_lines)
+        welcome_view = load_layout_view(
+            EMBEDS_NO_COMMANDS_DIR / "ticket_welcome.json",
+            values={
+                "opener_mention": opener.mention,
+                "booster_mention": booster_mention,
+                "summary_block": summary_block,
+            },
+            callbacks=ticket_welcome_callbacks(),
+            timeout=None,
+        )
+
+    welcome_message = await channel.send(
+        view=welcome_view,
+        allowed_mentions=discord.AllowedMentions(roles=True, users=True, everyone=False),
+    )
+    record["welcome_message_id"] = welcome_message.id
     await storage.create_ticket(channel.id, record)
 
+    return channel
+
+
+async def finalize_ticket_order(
+    interaction: discord.Interaction,
+    order_type: str,
+    summary_lines: list[str],
+    extra: dict,
+) -> None:
+    channel = interaction.channel
+    if not isinstance(channel, discord.TextChannel) or channel.guild is None:
+        return
+    guild = channel.guild
+
+    ticket = await storage.get_ticket(channel.id)
+    if ticket is None:
+        await interaction.followup.send("This ticket's details couldn't be found.", ephemeral=True)
+        return
+
+    booster_role = guild.get_role(BOOSTER_ROLE_ID)
+    opener = guild.get_member(ticket["opener_id"])
+    opener_mention = opener.mention if opener else f"<@{ticket['opener_id']}>"
+
     summary_block = "\n".join(summary_lines)
-    welcome_view = load_layout_view(
+    filled_view = load_layout_view(
         EMBEDS_NO_COMMANDS_DIR / "ticket_welcome.json",
         values={
-            "opener_mention": opener.mention,
+            "opener_mention": opener_mention,
             "booster_mention": booster_role.mention if booster_role else "the booster team",
             "summary_block": summary_block,
         },
@@ -113,46 +167,73 @@ async def create_ticket_channel(
         timeout=None,
     )
 
-    await channel.send(
-        view=welcome_view,
-        allowed_mentions=discord.AllowedMentions(roles=True, users=True, everyone=False),
-    )
+    update_fields = dict(extra)
+    update_fields["order_type"] = order_type
+    update_fields["pending_form"] = False
+    await storage.update_ticket(channel.id, **update_fields)
 
-    return channel
+    welcome_message_id = ticket.get("welcome_message_id")
+    edited = False
+    if welcome_message_id:
+        try:
+            welcome_message = await channel.fetch_message(welcome_message_id)
+            await welcome_message.edit(view=filled_view)
+            edited = True
+        except discord.NotFound:
+            edited = False
 
-
-async def send_order_confirmation(
-    interaction: discord.Interaction,
-    order_type: str,
-    order_type_slug: str,
-    summary_lines: list[str],
-    extra: dict | None = None,
-) -> None:
-    summary_block = "\n".join(summary_lines)
-
-    async def on_confirm(confirm_interaction: discord.Interaction) -> None:
-        await confirm_interaction.response.defer(ephemeral=True, thinking=True)
-        channel = await create_ticket_channel(
-            confirm_interaction, order_type, order_type_slug, summary_lines, extra,
-        )
-        await confirm_interaction.followup.send(f"Your ticket has been created: {channel.mention}", ephemeral=True)
-
-    async def on_cancel(cancel_interaction: discord.Interaction) -> None:
-        await cancel_interaction.response.edit_message(
-            view=build_notice_view("Order cancelled. Feel free to start a new order any time."),
+    if not edited:
+        await channel.send(
+            view=filled_view,
+            allowed_mentions=discord.AllowedMentions(roles=True, users=True, everyone=False),
         )
 
-    view = load_layout_view(
-        EMBEDS_NO_COMMANDS_DIR / "confirmation.json",
-        values={"summary_block": summary_block},
-        callbacks={"confirm_order": on_confirm, "cancel_order": on_cancel},
-        timeout=300,
+    await interaction.followup.send(
+        "Your order details have been saved. A staff member will be with you shortly.", ephemeral=True,
     )
 
-    if interaction.response.is_done():
-        await interaction.followup.send(view=view, ephemeral=True)
-    else:
-        await interaction.response.send_message(view=view, ephemeral=True)
+
+FillDetailsHandler = Callable[[discord.Interaction, dict], Awaitable[None]]
+
+_fill_details_handler: FillDetailsHandler | None = None
+
+
+def register_fill_details_handler(handler: FillDetailsHandler) -> None:
+    global _fill_details_handler
+    _fill_details_handler = handler
+
+
+async def _handle_ticket_fill_details(interaction: discord.Interaction) -> None:
+    channel = interaction.channel
+    ticket = await storage.get_ticket(channel.id) if isinstance(channel, discord.TextChannel) else None
+    if ticket is None:
+        await interaction.response.send_message("This ticket's details couldn't be found.", ephemeral=True)
+        return
+
+    member = interaction.user
+    is_opener = member.id == ticket.get("opener_id")
+    is_staff = isinstance(member, discord.Member) and is_staff_member(member)
+    if not (is_opener or is_staff):
+        await interaction.response.send_message(
+            "Only the person who opened this ticket (or staff) can fill in the order details.", ephemeral=True,
+        )
+        return
+
+    if _fill_details_handler is None:
+        await interaction.response.send_message(
+            "Order forms aren't set up yet — please contact staff directly in this ticket.", ephemeral=True,
+        )
+        return
+
+    await _fill_details_handler(interaction, ticket)
+
+
+def pending_ticket_callbacks() -> CallbackMap:
+    return {
+        "ticket_close": _handle_ticket_close,
+        "ticket_call_booster": _handle_ticket_call_booster,
+        "ticket_fill_details": _handle_ticket_fill_details,
+    }
 
 
 async def _handle_ticket_close(interaction: discord.Interaction) -> None:
@@ -325,6 +406,8 @@ def _build_completion_summary(
         lines.append(f"**Brawler** — {ticket['brawler_name']}")
     if ticket.get("starting_trophies") is not None:
         lines.append(f"**Starting Trophies** — {ticket['starting_trophies']:,}")
+    if current_trophies is not None:
+        lines.append(f"**Current Trophies** — {current_trophies:,}")
     lines.append(f"**Booster** — {booster_mention}")
     return "\n".join(lines)
 
