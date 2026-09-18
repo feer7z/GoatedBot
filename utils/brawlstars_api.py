@@ -41,126 +41,54 @@ class BrawlStarsClient:
     async def get_player(self, raw_tag: str) -> dict:
         session = await self._get_session()
         url = f"{BRAWL_API_BASE_URL}/players/{encode_tag(raw_tag)}"
-
         async with session.get(url) as response:
             if response.status == 200:
                 return await response.json()
-
             if response.status == 404:
-                raise BrawlStarsAPIError(
-                    "Player not found. Double check the player tag."
-                )
-
+                raise BrawlStarsAPIError("Player not found. Double check the player tag.")
             if response.status == 403:
                 raise BrawlStarsAPIError(
                     "The Brawl Stars API rejected this request (403). The API key is likely not "
                     "allow-listed for the IP address making the request. If BRAWL_API_BASE_URL points "
                     "at bsproxy.royaleapi.dev, whitelist 45.79.218.79 on the key instead of this server's IP."
                 )
-
             if response.status == 429:
-                raise BrawlStarsAPIError(
-                    "The Brawl Stars API rate limit was reached. Try again shortly."
-                )
-
-            raise BrawlStarsAPIError(
-                f"The Brawl Stars API returned an unexpected status ({response.status})."
-            )
+                raise BrawlStarsAPIError("The Brawl Stars API rate limit was reached. Try again shortly.")
+            raise BrawlStarsAPIError(f"The Brawl Stars API returned an unexpected status ({response.status}).")
 
     async def get_brawler(self, brawler_id_or_name: str) -> dict:
         session = await self._get_session()
         url = f"{BRAWL_API_BASE_URL}/brawlers/{quote(str(brawler_id_or_name))}"
-
         async with session.get(url) as response:
             if response.status == 200:
                 return await response.json()
-
             if response.status == 404:
                 raise BrawlStarsAPIError("Brawler not found.")
-
-            raise BrawlStarsAPIError(
-                f"The Brawl Stars API returned an unexpected status ({response.status})."
-            )
+            raise BrawlStarsAPIError(f"The Brawl Stars API returned an unexpected status ({response.status}).")
 
 
 def count_power_eleven_brawlers(player: dict) -> int:
     brawlers = player.get("brawlers", [])
-
-    return sum(
-        1
-        for brawler in brawlers
-        if brawler.get("power", 0) >= POWER_ELEVEN_THRESHOLD
-    )
+    return sum(1 for brawler in brawlers if brawler.get("power", 0) >= POWER_ELEVEN_THRESHOLD)
 
 
 def find_brawler(player: dict, brawler_name: str) -> dict | None:
     target = brawler_name.strip().lower()
-
     for brawler in player.get("brawlers", []):
         if brawler.get("name", "").strip().lower() == target:
             return brawler
-
     return None
 
 
-def _extract_winstreak_values(value: object) -> list[int]:
-    values: list[int] = []
-
-    if isinstance(value, dict):
-        for key, child in value.items():
-            normalized_key = (
-                str(key)
-                .replace("_", "")
-                .replace("-", "")
-                .lower()
-            )
-
-            if normalized_key in {
-                "currentwinstreak",
-                "maxwinstreak",
-                "highestwinstreak",
-                "bestwinstreak",
-            }:
-                try:
-                    number = int(child)
-
-                    if number >= 0:
-                        values.append(number)
-                except (TypeError, ValueError):
-                    pass
-
-            values.extend(_extract_winstreak_values(child))
-
-    elif isinstance(value, list):
-        for item in value:
-            values.extend(_extract_winstreak_values(item))
-
-    return values
-
-
-def get_highest_winstreak(player: dict) -> int | None:
-    values = _extract_winstreak_values(player)
-
-    if not values:
+def find_closest_brawler_below_threshold(player: dict, trophy_threshold: int) -> dict | None:
+    candidates = [b for b in player.get("brawlers", []) if b.get("trophies", 0) < trophy_threshold]
+    if not candidates:
         return None
-
-    return max(values)
+    return max(candidates, key=lambda b: b.get("trophies", 0))
 
 
 def summarize_player(player: dict) -> str:
     name = player.get("name", "Unknown")
     trophies = player.get("trophies", 0)
     p11_count = count_power_eleven_brawlers(player)
-    winstreak = get_highest_winstreak(player)
-
-    if winstreak is None:
-        return (
-            f"{name} — {trophies:,} trophies, "
-            f"{p11_count} Power 11 brawlers"
-        )
-
-    return (
-        f"{name} — {trophies:,} trophies, "
-        f"{p11_count} Power 11 brawlers, "
-        f"{winstreak} highest winstreak"
-    )
+    return f"{name} — {trophies:,} trophies, {p11_count} Power 11 brawlers"
