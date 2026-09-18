@@ -19,20 +19,27 @@ GoatedBot/
 │   ├── general.py             /ping
 │   ├── verification.py        /verification
 │   ├── orders.py              /ranked, /prestiges, /other + order modals
-│   └── tickets.py             Screenshot listener for the "Ticket Completed" flow
+│   ├── tickets.py             Screenshot listener for the "Ticket Completed" flow
+│   ├── support.py             /support panel command
+│   ├── giveaways.py           /giveaway command, entry button, auto-end loop
+│   └── welcome.py             on_member_join DM + /offers
 ├── utils/
 │   ├── layout_loader.py       Converts Components V2 JSON into discord.py views
-│   ├── ticket_actions.py      Ticket lifecycle, buttons, watermarking, reviews
+│   ├── ticket_actions.py      Order-ticket lifecycle, buttons, watermarking, reviews
+│   ├── support_actions.py     Support-ticket lifecycle (ticket-tool style), DM survey
+│   ├── giveaways.py           Giveaway storage, duration parsing, weighted winner draw
+│   ├── welcome_offers.py      Personalized starter-offer calculation and DM-to-ticket flow
 │   ├── brawlstars_api.py      Official Brawl Stars API client
 │   ├── pricing.py             All pricing rules and tables
 │   ├── watermark.py           Pillow watermarking
-│   ├── storage.py             Lightweight JSON-based ticket state
+│   ├── storage.py             Lightweight JSON-based order-ticket state
 │   ├── permissions.py         Staff / booster role checks
-│   └── modal_helpers.py       Modal text-field helper
+│   ├── modal_helpers.py       Modal text-field helper
+│   └── text_utils.py          Shared channel-name and notice-view helpers
 ├── embeds/                    JSON pasted from message.style — one file per slash command
 ├── embeds_no_commands/        JSON pasted from message.style — sent by the bot, not a command
 ├── assets/watermark.png       Placeholder watermark — replace with your real logo
-└── data/                      Runtime ticket storage (created automatically)
+└── data/                      Runtime ticket/giveaway storage (created automatically)
 ```
 
 ### Editing the look of messages with message.style
@@ -45,10 +52,11 @@ the classic embed builder). To restyle any message:
 2. Export the JSON.
 3. Paste it over the matching file (e.g. `embeds/ranked.json`).
 
-Dynamic messages (confirmations, ticket welcome, reviews, etc.) contain tokens
+Dynamic messages (ticket welcome, reviews, giveaways, etc.) contain tokens
 like `{{summary_block}}` or `{{opener_mention}}`. Keep those tokens somewhere in
 your pasted JSON — the bot fills them in at send time. Don't rename them unless
-you also update the matching Python code that fills them in.
+you also update the matching Python code that fills them in. The brand accent
+color used across every message is `config.ACCENT_COLOR` (currently `#1f8b4c`).
 
 ## 2. Discord application setup
 
@@ -68,18 +76,40 @@ you also update the matching Python code that fills them in.
 
 Copy `.env.example` to `.env` and fill in:
 
-| Variable         | Where to get it |
-|------------------|------------------|
-| `BOT_TOKEN`      | Developer Portal → Bot tab |
-| `BRAWL_API_KEY`  | `https://developer.brawlstars.com` → create a key **bound to your host's IP** (see the warning below) |
-| `SERVER_ID`      | Enable Discord Developer Mode (Settings → Advanced), right-click your server icon → Copy Server ID |
-| `STAFFS_ID`      | One or more staff role IDs, comma-separated (e.g. `111111111111111111,222222222222222222`) |
+| Variable              | Where to get it |
+|-----------------------|------------------|
+| `BOT_TOKEN`           | Developer Portal → Bot tab |
+| `BRAWL_API_KEY`       | `https://developer.brawlstars.com` → create a key (see below for which IP to whitelist) |
+| `BRAWL_API_BASE_URL`  | Leave as the default unless you want to call the official API directly (see below) |
+| `SERVER_ID`           | Enable Discord Developer Mode (Settings → Advanced), right-click your server icon → Copy Server ID |
+| `STAFFS_ID`           | One or more staff role IDs, comma-separated (e.g. `111111111111111111,222222222222222222`) |
 
-> **Brawl Stars API keys are locked to a single IP address.** If you deploy on
-> Railway and requests suddenly start failing with a 403, your key is likely
-> bound to an IP that changed. Check your Railway project's outbound IP (a
-> static outbound IP may require a paid Railway plan/add-on) and update the key
-> at developer.brawlstars.com to match it.
+### Brawl Stars API access: proxy vs. direct
+
+Brawl Stars API keys are locked to a single IP address, and Railway's default
+plan doesn't give you a static outbound IP — so a key created for your laptop
+will fail once the bot runs on Railway. This project defaults
+`BRAWL_API_BASE_URL` to **RoyaleAPI's proxy** (`https://bsproxy.royaleapi.dev/v1`),
+a community-run relay that sits in front of the official API with its own
+already-whitelisted IP, so your key keeps working no matter where the bot is
+hosted or how often the host's IP changes.
+
+To make this work:
+
+1. Create your key at `https://developer.brawlstars.com` (not
+   `developer.clashofclans.com` — that's a different game; RoyaleAPI's own docs
+   page links there by mistake, which is likely where that link came from).
+2. When asked for an allowed IP address, whitelist **`45.79.218.79`**
+   (RoyaleAPI's proxy IP — not your own). This is the current IP as of
+   RoyaleAPI's Feb 2022 update; if it ever stops working, check
+   `https://docs.royaleapi.com/proxy.html` for a new one.
+3. Leave `BRAWL_API_BASE_URL` as the default in `.env.example`.
+
+If you'd rather call `api.brawlstars.com` directly (e.g. you have a static IP),
+set `BRAWL_API_BASE_URL=https://api.brawlstars.com/v1` and whitelist your own
+server's IP on the key instead. Since RoyaleAPI's proxy is a third-party
+service, it can occasionally have its own downtime independent of Supercell's
+API — direct access avoids that dependency if a static IP is available to you.
 
 Everything else the bot needs is already filled in in `config.py`, since you
 gave literal IDs for them:
@@ -119,8 +149,8 @@ attach a Railway Volume mounted at `/app/data`.
 ## 6. Commands
 
 All commands below except `/ping` are restricted to your `STAFFS_ID` roles —
-they post a panel and are meant to be run once by staff in the right channel,
-not spammed by members.
+they post a panel (or, for `/giveaway`, start one) and are meant to be run by
+staff, not spammed by members.
 
 | Command | What it does |
 |---|---|
@@ -129,49 +159,163 @@ not spammed by members.
 | `/ranked` | Posts the Rank Carry / Rank Boost order panel |
 | `/prestiges` | Posts the Prestige Boost (Solo) / Prestige Carry (Duo) order panel |
 | `/other` | Posts the dropdown for Matcherino Pin, tournaments, Championship Challenge, winstreak boosts, and custom requests |
+| `/support` | Posts the support ticket panel (Ticket Tool style) |
+| `/giveaway prize duration winners` | Starts a giveaway that auto-ends and announces winners |
+| `/offers` | Open to everyone — resends the personalized starter-offers DM on demand |
 
 ## 7. How an order becomes a ticket
 
-1. A member clicks an **Order** button (or picks an option from `/other`) → a modal asks for their Brawl Stars tag, rank/prestige info, payment method, and notes.
-2. The bot looks up the account on the Brawl Stars API and calculates an estimated price (see the pricing section below).
-3. The member gets an ephemeral confirmation summary with **Confirm** / **Cancel**.
-4. On **Confirm**, a private ticket channel is created, visible to the opener, the booster role, and staff. The bot pings the booster role and the opener with the order summary and four buttons: **Close Ticket** (anyone), **Paid**, **Ticket Completed**, **Call a Booster** (staff only).
-5. **Paid** posts a message pinging the booster role with an **Accept & Start** button — only members with the booster role can accept it.
-6. **Ticket Completed** asks the client to upload a screenshot. When they do, the bot watermarks it (`assets/watermark.png`), posts it to the completed-orders channel, grants the client role, and sends a 0–5 star rating prompt.
-7. Picking a star rating opens a short modal for an optional comment; the result is posted to the reviews channel.
+The panels are deliberately **one click to buy** — nothing is asked before the
+ticket exists, so a customer is never staring at a form before they've even
+talked to anyone:
 
-## 8. Important: what the Brawl Stars API can and can't tell the bot
+1. A member clicks an **Order** button (or picks an option from `/other`) → a private ticket channel is created immediately, no questions asked. It's visible to the opener, the booster role, and staff.
+2. Inside the ticket, the bot pings the booster role and the opener and shows the chosen service plus a green **Fill Order Details** button, along with **Close Ticket** and **Call a Booster**.
+3. Clicking **Fill Order Details** opens the form for that specific service (the bot remembers which product the ticket was opened for, so the right form appears automatically). Only the ticket opener or staff can use it.
+4. On submit, the bot looks up the account on the Brawl Stars API, calculates the price, and **edits the original ticket message in place** — the pending message becomes the full order summary with **Paid**, **Ticket Completed**, and the rest of the staff buttons. If a form entry is wrong (bad tag, unknown brawler, etc.), the bot explains the problem privately and the button stays available to try again.
+5. **Paid** posts a message pinging the booster role with an **Accept & Start** button — only members with the booster role can accept it. Whoever accepts is remembered as the booster credited on the final showcase post.
+6. **Ticket Completed** asks the client to upload a screenshot. Once uploaded, the bot watermarks it (`assets/watermark.png`) and asks the client one more thing: **Show My Name** or **Stay Anonymous** in the showcase post.
+7. After that choice, the bot posts the watermarked screenshot to the completed-orders channel with price, payment method, booster, and — for Prestige orders — the brawler name, starting trophies (from order time) and current trophies (re-fetched live from the API at completion time). It also grants the client role and sends a 0–5 star rating prompt in the ticket.
+8. Picking a star rating opens a short modal for an optional comment; the result is posted to the reviews channel.
+
+Tickets opened from the **welcome offers DM** (section 13) skip steps 2–4
+entirely — the offer already knows the tag, price, and service, so those
+tickets arrive fully filled in from the start.
+
+## 8. Prestige orders: brawler-based, exact pricing
+
+Prestige orders no longer ask the customer to type their starting Prestige.
+Instead, the modal asks for their **player tag** and the **brawler's name**,
+and the bot does the rest:
+
+1. It fetches the account from the Brawl Stars API and finds that specific brawler.
+2. It reads the brawler's **live trophy count** — Prestige in Brawl Stars is per-brawler and unlocks at every 1,000 trophies (Prestige 1 at 1,000, Prestige 2 at 2,000, and so on, uncapped), so the current Prestige level is `trophies // 1000`.
+3. The price is `(trophies needed to reach the desired Prestige) × PRICE_PER_PRESTIGE_TROPHY`, exact — not a rounded step or estimate. Duo carries multiply that by `PRESTIGE_DUO_MULTIPLIER`.
+4. If the tag or brawler name can't be resolved, the order is blocked with an error instead of falling back to a guess, since an exact price requires real data.
+
+**The Power 11 brawler-count discount only applies to `/ranked` orders now**
+(`P11_DISCOUNT_TIERS` in `utils/pricing.py`) — Prestige pricing no longer uses it.
+
+## 9. Important: what the Brawl Stars API can and can't tell the bot
 
 The official Brawl Stars API **does not expose a player's current Ranked-mode
 tier** (Bronze–Masters) — only trophies, brawler power levels, club info, and
-similar account stats. Because of that:
+similar account stats. Because of that, for `/ranked` orders specifically:
 
-- **Starting/Desired Rank and Prestige level are entered manually** by the customer in the order modal — there's no way around this with the public API today.
-- The API **is** used for the Power 11 brawler count, which drives the discount tiers in `utils/pricing.py` (`P11_DISCOUNT_TIERS`), matching the "P11 Brawlers — X (Y% off)" idea from your example ticket.
-- If a tag is invalid or the API call fails, the order still goes through — the confirmation just shows "Account Lookup — Unavailable" instead of blocking the customer.
+- **Starting/Desired Rank are entered manually** by the customer in the order modal — there's no way around this with the public API today.
+- The API **is** used for the Power 11 brawler count, which drives the ranked discount tiers.
+- If a tag is invalid or the API call fails for a Ranked order, the order still goes through — the confirmation just shows "Account Lookup — Unavailable" instead of blocking the customer, since Ranked pricing doesn't depend on the API the way Prestige pricing now does.
 
-## 9. Pricing — you need to tune this
+## 10. Pricing — you need to tune this
 
 All prices in `utils/pricing.py` are **placeholder values** so the bot is
 fully functional out of the box, not real Goated Boost prices:
 
 - `PRICE_PER_RANK_STEP` — € charged per rank sub-division (Bronze I → Bronze II is one step).
-- `PRESTIGE_PRICE_PER_STEP` and `PRESTIGE_DUO_MULTIPLIER` (currently `1.5`, as you specified).
-- `P11_DISCOUNT_TIERS` — brawler-count discount breakpoints.
+- `PRICE_PER_PRESTIGE_TROPHY` and `PRESTIGE_DUO_MULTIPLIER` (currently `1.5`, as you specified) — Prestige is priced per trophy needed, not per Prestige level, since a P1→P2 gap and a P4→P5 gap are both exactly 1,000 trophies anyway.
+- `P11_DISCOUNT_TIERS` — brawler-count discount breakpoints, Ranked only.
 - `OTHER_SERVICE_OPTIONS` — the 5 dropdown entries, their flat prices, and the winstreak per-win rate.
+- `MINIMUM_ORDER_PRICE` — floor applied to every calculated price.
 
 Open that file and adjust the numbers to your real rates before going live.
 
-## 10. Customizing further
+## 11. Support tickets (`/support`)
+
+A separate, simpler ticket system for general support — not tied to an order
+or a price, styled after Ticket Tool:
+
+1. `/support` posts a panel with an **Open Ticket** button.
+2. Clicking it asks the member what they need help with, then creates a private channel (opener + staff only — no booster role access, unlike order tickets).
+3. Inside: **Claim** (staff only, marks who's handling it) and **Close Ticket** (the opener or staff).
+4. On close, the bot DMs the opener a 0–5 star satisfaction survey (same style as the order review flow) before deleting the channel. If the member has DMs closed, the ticket still closes normally — the survey is just skipped.
+5. Survey results post to the same reviews channel as order reviews, labeled "Support".
+
+Support tickets use their own storage file (`data/support_tickets.json`) and,
+optionally, their own category — set `SUPPORT_CATEGORY_ID` in `config.py`.
+
+## 12. Giveaways (`/giveaway`)
+
+`/giveaway prize:"Nitro" duration:1d winners:1` posts a giveaway with an
+**Enter** button and ends itself automatically (checked every 30 seconds by a
+background loop, so it survives restarts/redeploys — it re-reads
+`data/giveaways.json` rather than relying on an in-memory timer).
+
+**Entry requirement (visible).** The optional `required_role` parameter gates
+who can even press Enter — pick a role in Discord's own role picker when
+running the command (e.g. your "3 Invites" role) and only members who have it
+can join. Discord shows a friendly error to anyone else. This is checked once,
+at entry time. Leave it blank for an open-to-everyone giveaway. Since it's a
+per-giveaway command option rather than a fixed config value, the same command
+works for a "5 Invites" giveaway later without touching any code — and the
+requirement is shown right in the giveaway message so people know to go earn it.
+
+**Winner odds (hidden).** Separately, winners are picked with **weighted random
+selection** among whoever entered: some roles can be given better odds via
+`GIVEAWAY_ROLE_WEIGHTS` in `config.py`:
+
+```python
+GIVEAWAY_DEFAULT_WEIGHT = 1.0
+GIVEAWAY_ROLE_WEIGHTS = {
+    CLIENT_ROLE_ID: 2.0,
+    BOOSTER_ROLE_ID: 1.5,
+}
+```
+
+A member with a role worth `2.0` is twice as likely to win as someone with the
+default weight — but nothing in any command, button, or message ever displays
+these numbers or which roles have them; it's a config-only lever, exactly as
+you asked. Edit the dict to add, remove, or reweight roles; it isn't exposed
+through any command. This is intentionally separate from `required_role`: the
+requirement decides *who can enter* and is meant to be seen, the weights only
+influence *who wins among entrants* and are meant to stay invisible.
+
+## 13. Welcome offers (join DM / `/offers`)
+
+As soon as someone joins the server (and any time via `/offers`, in case the
+join DM was missed or they just want to check again), the bot DMs them a
+**Show Me Offers** button. Clicking it opens a modal for their Brawl Stars
+player tag — required, since every offer below is calculated from their real
+account data, not a guess:
+
+- **🏆 Victory Milestone** — reads `3vs3Victories` and offers to boost them to
+  the next multiple of 100 (e.g. 847 → 900), priced with the same per-win rate
+  as the `winstreak_boost` entry in `OTHER_SERVICE_OPTIONS`, so it stays in
+  sync with that price automatically.
+- **⭐ Prestige Push** — finds whichever of their brawlers has the *smallest*
+  trophy gap left before Prestige 3 and prices it with the exact same
+  `calculate_prestige_price` function `/prestiges` uses.
+- **🎯 Ranked Push** — since the API can't read a Ranked tier (see the section
+  above), this one is a plain "open a ticket and we'll quote you" card with no
+  price attached, rather than a guess.
+
+Each card's **Order This** (or **Ask About Ranked**) button creates a ticket
+directly — no extra confirmation step, since clicking it *is* the acceptance,
+same as you described. These tickets skip the Payment Method line (nothing
+asks for it in the DM, to keep the flow to a single tap) and, for the Ranked
+card, skip a fixed price too — both get filled in by staff once the ticket is
+open, exactly like a normal manual sale.
+
+If a member has DMs from the server disabled, the join DM just silently fails
+to send — there's no fallback channel post, so as not to publicly call out
+who didn't get it.
+
+## 14. Customizing further
 
 - **Watermark**: replace `assets/watermark.png` with your real logo (transparent PNG recommended). It's stamped in the bottom-right corner of every completion screenshot.
-- **Ticket category**: set `TICKET_CATEGORY_ID` in `config.py` if you want ticket channels created inside a specific category.
+- **Ticket category**: set `TICKET_CATEGORY_ID` (orders) or `SUPPORT_CATEGORY_ID` (support) in `config.py` if you want ticket channels created inside a specific category.
 - **Rank list**: `RANK_TIERS` in `utils/pricing.py` reflects the current Bronze → Masters ladder. Update it if Supercell changes the ranked system.
+- **Support survey destination**: both order reviews and support-ticket surveys currently post to `REVIEWS_CHANNEL_ID`. Point support feedback elsewhere by adding a second channel constant and passing it through `_send_satisfaction_survey` in `utils/support_actions.py` if you'd rather keep them separate.
 
-## 11. Troubleshooting
+## 15. Troubleshooting
 
 - **Slash commands don't show up** — double check `SERVER_ID` is correct and the bot has the `applications.commands` scope from step 2 above.
 - **"Only staff can..." on every panel command** — the account running the command needs a role listed in `STAFFS_ID`.
 - **Screenshot uploads are ignored** — confirm `MESSAGE CONTENT INTENT` is enabled in the Developer Portal (step 3); without it, attachments are invisible to the bot.
-- **Brawl Stars lookups fail with a 403** — your `BRAWL_API_KEY` is bound to an IP address that no longer matches your host. Regenerate it at developer.brawlstars.com with your current IP.
+- **Brawl Stars lookups fail with "The Brawl Stars API rejected this request (403)"** — the key isn't whitelisted for the IP actually making the request. Using the default proxy? Whitelist `45.79.218.79` on the key (not your server's IP). Using `api.brawlstars.com` directly? Whitelist your server's current IP instead.
+- **Brawl Stars lookups fail with "Player not found"** — this is a 404, a different problem from the one above: the tag itself wasn't recognized. Check for typos, make sure it starts with `#`, and confirm you didn't submit the modal's placeholder text (`#ABC123XYZ`) instead of a real tag.
+- **A Prestige order won't confirm at all** — this is intentional: since the price is now calculated exactly from live trophy data, the bot blocks the order (with an explanation) instead of guessing if the tag or brawler name can't be resolved.
+- **Support ticket closed without a DM survey arriving** — the member likely has DMs from server members/bots disabled. The ticket still closes normally; there's no fallback delivery for the survey by design, so as not to spam a public channel with what's meant to be a private ask.
+- **A giveaway didn't end on time** — it ends on the next 30-second check after its timer expires, not to the second. If it never ends, confirm the bot process is actually running (Railway logs) — the loop only runs while the bot is connected.
+- **New members never get the offers DM** — this needs `SERVER MEMBERS INTENT` enabled (same as the client-role step) to fire `on_member_join` at all; separately, some members simply have server DMs off, which the bot can't do anything about. `/offers` gives them (or you, for a quick test) a manual way to trigger the same DM.
+- **A ticket is stuck showing "Fill Order Details"** — that just means nobody submitted the form yet; the order summary, **Paid** and **Ticket Completed** buttons only appear once it's filled in. Staff can click it on the customer's behalf if needed.
 - **Ticket buttons stop responding after a redeploy** — they shouldn't; all interactive views are registered as persistent on startup. If you renamed a `custom_id` inside one of the JSON files, update the matching callback name in the Python code too.
