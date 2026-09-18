@@ -85,6 +85,7 @@ class BrawlStarsClient:
 
 def count_power_eleven_brawlers(player: dict) -> int:
     brawlers = player.get("brawlers", [])
+
     return sum(
         1
         for brawler in brawlers
@@ -107,7 +108,12 @@ def _extract_winstreak_values(value: object) -> list[int]:
 
     if isinstance(value, dict):
         for key, child in value.items():
-            normalized_key = str(key).replace("_", "").replace("-", "").lower()
+            normalized_key = (
+                str(key)
+                .replace("_", "")
+                .replace("-", "")
+                .lower()
+            )
 
             if normalized_key in {
                 "currentwinstreak",
@@ -117,6 +123,7 @@ def _extract_winstreak_values(value: object) -> list[int]:
             }:
                 try:
                     number = int(child)
+
                     if number >= 0:
                         values.append(number)
                 except (TypeError, ValueError):
@@ -147,9 +154,13 @@ def summarize_player(player: dict) -> str:
     winstreak = get_highest_winstreak(player)
 
     if winstreak is None:
-        return f"{name} — {trophies:,} trophies, {p11_count} Power 11 brawlers"
+        return (
+            f"{name} — {trophies:,} trophies, "
+            f"{p11_count} Power 11 brawlers"
+        )
 
     return (
-        f"{name} — {trophies:,} trophies, {p11_count} Power 11 brawlers, "
+        f"{name} — {trophies:,} trophies, "
+        f"{p11_count} Power 11 brawlers, "
         f"{winstreak} highest winstreak"
     )
