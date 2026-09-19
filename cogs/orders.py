@@ -201,7 +201,7 @@ async def handle_winstreak_submission(interaction: discord.Interaction, modal: W
     target, breakdown = calculate_winstreak_price(current_streak)
 
     summary_lines = [
-        emojis.field(emojis.PAPER, "Player Tag", normalize_tag(modal.player_tag.value)),
+        emojis.field(emojis.PLAYER, "Player Tag", normalize_tag(modal.player_tag.value)),
         emojis.field(emojis.INFO, "Account", player.get("name", "Unknown")),
         emojis.field(emojis.PAPER, "Brawler", brawler.get("name", "Unknown")),
         emojis.field(emojis.WINSTREAK, "Current Best Streak", f"{current_streak} wins"),
