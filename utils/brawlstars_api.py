@@ -87,6 +87,14 @@ def find_closest_brawler_below_threshold(player: dict, trophy_threshold: int) ->
     return max(candidates, key=lambda b: b.get("trophies", 0))
 
 
+def find_best_winstreak_brawler(player: dict) -> dict | None:
+    brawlers = player.get("brawlers", [])
+    candidates = [b for b in brawlers if b.get("maxWinStreak", 0) > 0]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda b: b.get("maxWinStreak", 0))
+
+
 def summarize_player(player: dict) -> str:
     name = player.get("name", "Unknown")
     trophies = player.get("trophies", 0)

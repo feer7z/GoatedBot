@@ -10,262 +10,50 @@ RANK_TIERS = [
     "Diamond I", "Diamond II", "Diamond III",
     "Mythic I", "Mythic II", "Mythic III",
     "Legendary I", "Legendary II", "Legendary III",
-    "Masters",
+    "Masters I", "Masters II", "Masters III",
+    "Pro",
 ]
 
 RANK_ALIASES = {
-    # Bronze I
-    "bronze1": "Bronze I",
-    "bronze 1": "Bronze I",
-    "bronzei": "Bronze I",
-    "bronze i": "Bronze I",
-    "bronce1": "Bronze I",
-    "bronce 1": "Bronze I",
-    "broncei": "Bronze I",
-    "bronce i": "Bronze I",
-    "bronse1": "Bronze I",
-    "bronse 1": "Bronze I",
-
-    # Bronze II
-    "bronze2": "Bronze II",
-    "bronze 2": "Bronze II",
-    "bronzeii": "Bronze II",
-    "bronze ii": "Bronze II",
-    "bronce2": "Bronze II",
-    "bronce 2": "Bronze II",
-    "bronceii": "Bronze II",
-    "bronce ii": "Bronze II",
-    "bronse2": "Bronze II",
-    "bronse 2": "Bronze II",
-
-    # Bronze III
-    "bronze3": "Bronze III",
-    "bronze 3": "Bronze III",
-    "bronzeiii": "Bronze III",
-    "bronze iii": "Bronze III",
-    "bronce3": "Bronze III",
-    "bronce 3": "Bronze III",
-    "bronceiii": "Bronze III",
-    "bronce iii": "Bronze III",
-    "bronse3": "Bronze III",
-    "bronse 3": "Bronze III",
-
-    # Silver I
-    "silver1": "Silver I",
-    "silver 1": "Silver I",
-    "silveri": "Silver I",
-    "silver i": "Silver I",
-    "siver1": "Silver I",
-    "siver 1": "Silver I",
-    "silvr1": "Silver I",
-    "silvr 1": "Silver I",
-    "plata1": "Silver I",
-    "plata 1": "Silver I",
-
-    # Silver II
-    "silver2": "Silver II",
-    "silver 2": "Silver II",
-    "silverii": "Silver II",
-    "silver ii": "Silver II",
-    "siver2": "Silver II",
-    "siver 2": "Silver II",
-    "silvr2": "Silver II",
-    "silvr 2": "Silver II",
-    "plata2": "Silver II",
-    "plata 2": "Silver II",
-
-    # Silver III
-    "silver3": "Silver III",
-    "silver 3": "Silver III",
-    "silveriii": "Silver III",
-    "silver iii": "Silver III",
-    "siver3": "Silver III",
-    "siver 3": "Silver III",
-    "silvr3": "Silver III",
-    "silvr 3": "Silver III",
-    "plata3": "Silver III",
-    "plata 3": "Silver III",
-
-    # Gold I
-    "gold1": "Gold I",
-    "gold 1": "Gold I",
-    "goldi": "Gold I",
-    "gold i": "Gold I",
-    "gld1": "Gold I",
-    "gld 1": "Gold I",
-    "oro1": "Gold I",
-    "oro 1": "Gold I",
-
-    # Gold II
-    "gold2": "Gold II",
-    "gold 2": "Gold II",
-    "goldii": "Gold II",
-    "gold ii": "Gold II",
-    "gld2": "Gold II",
-    "gld 2": "Gold II",
-    "oro2": "Gold II",
-    "oro 2": "Gold II",
-
-    # Gold III
-    "gold3": "Gold III",
-    "gold 3": "Gold III",
-    "goldiii": "Gold III",
-    "gold iii": "Gold III",
-    "gld3": "Gold III",
-    "gld 3": "Gold III",
-    "oro3": "Gold III",
-    "oro 3": "Gold III",
-
-    # Diamond I
-    "diamond1": "Diamond I",
-    "diamond 1": "Diamond I",
-    "diamondi": "Diamond I",
-    "diamond i": "Diamond I",
-    "diamon1": "Diamond I",
-    "diamon 1": "Diamond I",
-    "diamante1": "Diamond I",
-    "diamante 1": "Diamond I",
-
-    # Diamond II
-    "diamond2": "Diamond II",
-    "diamond 2": "Diamond II",
-    "diamondii": "Diamond II",
-    "diamond ii": "Diamond II",
-    "diamon2": "Diamond II",
-    "diamon 2": "Diamond II",
-    "diamante2": "Diamond II",
-    "diamante 2": "Diamond II",
-
-    # Diamond III
-    "diamond3": "Diamond III",
-    "diamond 3": "Diamond III",
-    "diamondiii": "Diamond III",
-    "diamond iii": "Diamond III",
-    "diamon3": "Diamond III",
-    "diamon 3": "Diamond III",
-    "diamante3": "Diamond III",
-    "diamante 3": "Diamond III",
-
-    # Mythic I
-    "mythic1": "Mythic I",
-    "mythic 1": "Mythic I",
-    "mythici": "Mythic I",
-    "mythic i": "Mythic I",
-    "mythyc1": "Mythic I",
-    "mythyc 1": "Mythic I",
-    "mitico1": "Mythic I",
-    "mitico 1": "Mythic I",
-
-    # Mythic II
-    "mythic2": "Mythic II",
-    "mythic 2": "Mythic II",
-    "mythicii": "Mythic II",
-    "mythic ii": "Mythic II",
-    "mythyc2": "Mythic II",
-    "mythyc 2": "Mythic II",
-    "mitico2": "Mythic II",
-    "mitico 2": "Mythic II",
-
-    # Mythic III
-    "mythic3": "Mythic III",
-    "mythic 3": "Mythic III",
-    "mythiciii": "Mythic III",
-    "mythic iii": "Mythic III",
-    "mythyc3": "Mythic III",
-    "mythyc 3": "Mythic III",
-    "mitico3": "Mythic III",
-    "mitico 3": "Mythic III",
-
-    # Legendary I
-    "legendary1": "Legendary I",
-    "legendary 1": "Legendary I",
-    "legendaryi": "Legendary I",
-    "legendary i": "Legendary I",
-    "legend1": "Legendary I",
-    "legend 1": "Legendary I",
-    "legendario1": "Legendary I",
-    "legendario 1": "Legendary I",
-
-    # Legendary II
-    "legendary2": "Legendary II",
-    "legendary 2": "Legendary II",
-    "legendaryii": "Legendary II",
-    "legendary ii": "Legendary II",
-    "legend2": "Legendary II",
-    "legend 2": "Legendary II",
-    "legendario2": "Legendary II",
-    "legendario 2": "Legendary II",
-
-    # Legendary III
-    "legendary3": "Legendary III",
-    "legendary 3": "Legendary III",
-    "legendaryiii": "Legendary III",
-    "legendary iii": "Legendary III",
-    "legend3": "Legendary III",
-    "legend 3": "Legendary III",
-    "legendario3": "Legendary III",
-    "legendario 3": "Legendary III",
-
-    # Masters I
-    "master1": "Masters I",
-    "master 1": "Masters I",
-    "masteri": "Masters I",
-    "master i": "Masters I",
-    "masters1": "Masters I",
-    "masters 1": "Masters I",
-    "mastersi": "Masters I",
-    "masters i": "Masters I",
-    "maestro1": "Masters I",
-    "maestro 1": "Masters I",
-
-    # Masters II
-    "master2": "Masters II",
-    "master 2": "Masters II",
-    "masterii": "Masters II",
-    "master ii": "Masters II",
-    "masters2": "Masters II",
-    "masters 2": "Masters II",
-    "mastersii": "Masters II",
-    "masters ii": "Masters II",
-    "maestro2": "Masters II",
-    "maestro 2": "Masters II",
-
-    # Masters III
-    "master3": "Masters III",
-    "master 3": "Masters III",
-    "masteriii": "Masters III",
-    "master iii": "Masters III",
-    "masters3": "Masters III",
-    "masters 3": "Masters III",
-    "mastersiii": "Masters III",
-    "masters iii": "Masters III",
-    "maestro3": "Masters III",
-    "maestro 3": "Masters III",
-
-    # Pro
-    "pro": "Pro",
-    "pros": "Pro",
-    "pr0": "Pro",
-    "proo": "Pro",
-    "pr": "Pro",
+    "bronze1": "Bronze I", "bronze 1": "Bronze I", "bronzei": "Bronze I",
+    "bronze2": "Bronze II", "bronze 2": "Bronze II", "bronzeii": "Bronze II",
+    "bronze3": "Bronze III", "bronze 3": "Bronze III", "bronzeiii": "Bronze III",
+    "silver1": "Silver I", "silver 1": "Silver I", "silveri": "Silver I",
+    "silver2": "Silver II", "silver 2": "Silver II", "silverii": "Silver II",
+    "silver3": "Silver III", "silver 3": "Silver III", "silveriii": "Silver III",
+    "gold1": "Gold I", "gold 1": "Gold I", "goldi": "Gold I",
+    "gold2": "Gold II", "gold 2": "Gold II", "goldii": "Gold II",
+    "gold3": "Gold III", "gold 3": "Gold III", "goldiii": "Gold III",
+    "diamond1": "Diamond I", "diamond 1": "Diamond I", "diamondi": "Diamond I",
+    "diamond2": "Diamond II", "diamond 2": "Diamond II", "diamondii": "Diamond II",
+    "diamond3": "Diamond III", "diamond 3": "Diamond III", "diamondiii": "Diamond III",
+    "mythic1": "Mythic I", "mythic 1": "Mythic I", "mythici": "Mythic I",
+    "mythic2": "Mythic II", "mythic 2": "Mythic II", "mythicii": "Mythic II",
+    "mythic3": "Mythic III", "mythic 3": "Mythic III", "mythiciii": "Mythic III",
+    "legendary1": "Legendary I", "legendary 1": "Legendary I", "legendaryi": "Legendary I",
+    "legendary2": "Legendary II", "legendary 2": "Legendary II", "legendaryii": "Legendary II",
+    "legendary3": "Legendary III", "legendary 3": "Legendary III", "legendaryiii": "Legendary III",
+    "masters1": "Masters I", "masters 1": "Masters I", "mastersi": "Masters I",
+    "master1": "Masters I", "master 1": "Masters I",
+    "masters2": "Masters II", "masters 2": "Masters II", "mastersii": "Masters II",
+    "master2": "Masters II", "master 2": "Masters II",
+    "masters3": "Masters III", "masters 3": "Masters III", "mastersiii": "Masters III",
+    "master3": "Masters III", "master 3": "Masters III",
+    "master": "Masters I", "masters": "Masters I",
+    "pro": "Pro", "pro rank": "Pro",
 }
 
 PRICE_PER_RANK_STEP = 3.5
-
-VICTORY_MILESTONE_STEP = 100
-PRICE_PER_VICTORY_MILESTONE = 15.0
 
 PRESTIGE_TROPHY_STEP = 1000
 PRICE_PER_PRESTIGE_TROPHY = 0.05
 PRESTIGE_DUO_MULTIPLIER = 1.5
 
 P11_DISCOUNT_TIERS = [
-    (70, 0.15),   # 70+ P11 → 15%
-    (60, 0.125),  # 60-69 → 12.5%
-    (50, 0.10),   # 50-59 → 10%
-    (40, 0.075),  # 40-49 → 7.5%
-    (30, 0.05),   # 30-39 → 5%
-    (20, 0.025),  # 20-29 → 2.5%
+    (70, 0.10),
+    (60, 0.075),
+    (50, 0.05),
+    (40, 0.025),
 ]
 
 MINIMUM_ORDER_PRICE = 5.0
@@ -274,16 +62,17 @@ OTHER_SERVICE_OPTIONS = [
     {
         "key": "matcherino_pin",
         "label": "Matcherino Pin",
-        "description": "100€",
-        "base_price": 100.0,
+        "description": "150€",
+        "base_price": 150.0,
         "pricing_note": "Flat rate.",
+        "detail_label": "Any notes for the booster (optional)",
     },
     {
         "key": "matcherino_tournament",
         "label": "Play Matcherino Tournament (tB+ team)",
         "description": "Custom quote",
         "base_price": None,
-        "pricing_note": "Calling a tB+ team. Final price is confirmed by staff.",
+        "pricing_note": "Requires a tB+ team. Final price is confirmed by staff.",
         "detail_label": "Preferred date/time and team notes",
     },
     {
@@ -292,16 +81,16 @@ OTHER_SERVICE_OPTIONS = [
         "description": "5€",
         "base_price": 5.0,
         "pricing_note": "Flat rate.",
-        "detail_label": "Preferred date/time and team notes",
+        "detail_label": "Any notes for the booster (optional)",
     },
     {
         "key": "winstreak_boost",
         "label": "Winstreak Boost",
-        "description": "100 wins → 10€",
-        "base_price": 0.5,
+        "description": "From 5€",
+        "base_price": 5.0,
         "pricing_note": "Starting price. Scales with the requested streak length.",
         "detail_label": "Desired winstreak (e.g. 10)",
-        "per_unit_price": 0.10,
+        "per_unit_price": 0.5,
     },
     {
         "key": "other_request",
@@ -335,6 +124,25 @@ def rank_distance(start_rank: str, desired_rank: str) -> int | None:
         return None
     distance = RANK_TIERS.index(desired_rank) - RANK_TIERS.index(start_rank)
     return distance
+
+
+def get_current_ranked_tier(player: dict) -> str | None:
+    rank_index = player.get("rankedRank")
+    if isinstance(rank_index, int) and 1 <= rank_index <= len(RANK_TIERS):
+        return RANK_TIERS[rank_index - 1]
+    rank_name = player.get("rankedRankName")
+    if isinstance(rank_name, str) and rank_name.strip():
+        return normalize_rank_input(rank_name)
+    return None
+
+
+def next_rank_tier(current_rank: str) -> str | None:
+    if current_rank not in RANK_TIERS:
+        return None
+    index = RANK_TIERS.index(current_rank)
+    if index + 1 >= len(RANK_TIERS):
+        return None
+    return RANK_TIERS[index + 1]
 
 
 def p11_discount_rate(p11_brawler_count: int | None) -> float:
@@ -439,29 +247,33 @@ def calculate_prestige_price(
     )
 
 
-
-def calculate_victory_milestone_price(current_victories: int) -> tuple[int, PriceBreakdown]:
-    current_victories = max(int(current_victories), 0)
-    target_victories = ((current_victories // VICTORY_MILESTONE_STEP) + 1) * VICTORY_MILESTONE_STEP
-    final_price = PRICE_PER_VICTORY_MILESTONE
-
-    return target_victories, PriceBreakdown(
-        base_price=final_price,
-        discount_rate=0.0,
-        multiplier=1.0,
-        final_price=round(final_price, 2),
-        notes=[
-            f"{target_victories - current_victories:,} victories needed.",
-            f"Price calculated at {PRICE_PER_VICTORY_MILESTONE:.2f}€ per {VICTORY_MILESTONE_STEP} victories.",
-        ],
-    )
-
-
 def get_other_option(key: str) -> dict | None:
     for option in OTHER_SERVICE_OPTIONS:
         if option["key"] == key:
             return option
     return None
+
+
+def next_streak_milestone(current_streak: int) -> int:
+    return ((max(current_streak, 0) // 100) + 1) * 100
+
+
+def calculate_winstreak_price(current_streak: int) -> tuple[int, PriceBreakdown]:
+    target = next_streak_milestone(current_streak)
+    wins_needed = target - current_streak
+
+    winstreak_option = get_other_option("winstreak_boost") or {}
+    per_unit_price = winstreak_option.get("per_unit_price", 0.5)
+    base_price = winstreak_option.get("base_price", MINIMUM_ORDER_PRICE)
+
+    raw_price = max(base_price, wins_needed * per_unit_price)
+    final_price = max(raw_price, MINIMUM_ORDER_PRICE)
+    notes = [f"{wins_needed} wins needed to beat your {current_streak}-win record and reach {target}."]
+
+    breakdown = PriceBreakdown(
+        base_price=raw_price, discount_rate=0.0, multiplier=1.0, final_price=round(final_price, 2), notes=notes,
+    )
+    return target, breakdown
 
 
 def calculate_other_price(option_key: str, detail_text: str) -> PriceBreakdown | None:

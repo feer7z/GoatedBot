@@ -18,7 +18,7 @@ from config import (
     STAFF_ROLE_IDS,
     TICKET_CATEGORY_ID,
 )
-from utils import storage
+from utils import emojis, storage
 from utils.brawlstars_api import BrawlStarsAPIError, BrawlStarsClient, find_brawler
 from utils.layout_loader import CallbackMap, load_layout_view
 from utils.modal_helpers import add_text_field
@@ -194,13 +194,33 @@ async def finalize_ticket_order(
 
 
 FillDetailsHandler = Callable[[discord.Interaction, dict], Awaitable[None]]
+CtaHandler = Callable[[discord.Interaction], Awaitable[None]]
 
 _fill_details_handler: FillDetailsHandler | None = None
+_cta_handler: CtaHandler | None = None
 
 
 def register_fill_details_handler(handler: FillDetailsHandler) -> None:
     global _fill_details_handler
     _fill_details_handler = handler
+
+
+def register_cta_handler(handler: CtaHandler) -> None:
+    global _cta_handler
+    _cta_handler = handler
+
+
+async def _handle_cta_get_offer(interaction: discord.Interaction) -> None:
+    if _cta_handler is None:
+        await interaction.response.send_message(
+            "Offers aren't available right now — please open a ticket instead.", ephemeral=True,
+        )
+        return
+    await _cta_handler(interaction)
+
+
+def cta_button_callbacks() -> CallbackMap:
+    return {"cta_get_offer": _handle_cta_get_offer}
 
 
 async def _handle_ticket_fill_details(interaction: discord.Interaction) -> None:
@@ -266,6 +286,37 @@ async def _handle_ticket_close(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(view=view, ephemeral=True)
 
 
+async def get_or_recover_ticket(channel: discord.TextChannel) -> dict | None:
+    ticket = await storage.get_ticket(channel.id)
+    if ticket is not None:
+        return ticket
+
+    if not channel.name.startswith("ticket-"):
+        return None
+
+    opener_id = None
+    for target, overwrite in channel.overwrites.items():
+        if isinstance(target, discord.Member) and not target.bot and overwrite.view_channel:
+            if not is_staff_member(target) and not member_has_role(target, BOOSTER_ROLE_ID):
+                opener_id = target.id
+                break
+
+    if opener_id is None:
+        return None
+
+    recovered = {
+        "opener_id": opener_id,
+        "order_type": "Boost",
+        "status": "open",
+        "paid": False,
+        "claimed_by": None,
+        "pending_form": False,
+        "recovered": True,
+    }
+    await storage.create_ticket(channel.id, recovered)
+    return recovered
+
+
 async def _handle_ticket_paid(interaction: discord.Interaction) -> None:
     member = interaction.user
     if not isinstance(member, discord.Member) or not is_staff_member(member):
@@ -276,7 +327,7 @@ async def _handle_ticket_paid(interaction: discord.Interaction) -> None:
     if not isinstance(channel, discord.TextChannel):
         return
 
-    ticket = await storage.get_ticket(channel.id)
+    ticket = await get_or_recover_ticket(channel)
     if ticket is None:
         await interaction.response.send_message("This channel is not a tracked ticket.", ephemeral=True)
         return
@@ -308,7 +359,7 @@ async def _handle_ticket_completed(interaction: discord.Interaction) -> None:
     if not isinstance(channel, discord.TextChannel):
         return
 
-    ticket = await storage.get_ticket(channel.id)
+    ticket = await get_or_recover_ticket(channel)
     if ticket is None:
         await interaction.response.send_message("This channel is not a tracked ticket.", ephemeral=True)
         return
@@ -397,18 +448,18 @@ def _build_completion_summary(
     current_trophies: int | None,
 ) -> str:
     lines = [
-        f"**Buyer** — {buyer_display}",
-        f"**Service** — {ticket.get('order_type', 'Boost')}",
-        f"**Price** — {_format_price(ticket.get('price'))}",
-        f"**Payment Method** — {ticket.get('payment_method') or 'N/A'}",
+        emojis.field(emojis.INFO, "Buyer", buyer_display),
+        emojis.field(emojis.QUESTION, "Service", ticket.get("order_type", "Boost")),
+        emojis.field(emojis.GOATED, "Price", _format_price(ticket.get("price"))),
+        emojis.field(emojis.PAYMENT_METHOD, "Payment Method", ticket.get("payment_method") or "N/A"),
     ]
     if ticket.get("brawler_name"):
-        lines.append(f"**Brawler** — {ticket['brawler_name']}")
+        lines.append(emojis.field(emojis.PAPER, "Brawler", ticket["brawler_name"]))
     if ticket.get("starting_trophies") is not None:
-        lines.append(f"**Starting Trophies** — {ticket['starting_trophies']:,}")
+        lines.append(emojis.field(emojis.PAPER, "Starting Trophies", f"{ticket['starting_trophies']:,}"))
     if current_trophies is not None:
-        lines.append(f"**Current Trophies** — {current_trophies:,}")
-    lines.append(f"**Booster** — {booster_mention}")
+        lines.append(emojis.field(emojis.PAPER, "Current Trophies", f"{current_trophies:,}"))
+    lines.append(emojis.field(emojis.GOATED, "Booster", booster_mention))
     return "\n".join(lines)
 
 
@@ -537,6 +588,7 @@ async def _finalize_completion(interaction: discord.Interaction, show_name: bool
         completed_view = load_layout_view(
             EMBEDS_NO_COMMANDS_DIR / "completed_post.json",
             values={"completion_summary": completion_summary},
+            callbacks=cta_button_callbacks(),
             timeout=None,
         )
         await completed_channel.send(
@@ -632,6 +684,7 @@ async def _submit_review(
                 "stars_display": stars_display,
                 "comment_block": comment_block,
             },
+            callbacks=cta_button_callbacks(),
             timeout=None,
         )
         await reviews_channel.send(
@@ -684,3 +737,9 @@ def review_prompt_callbacks() -> CallbackMap:
 
         callbacks[f"review_rate_{stars}"] = handler
     return callbacks
+
+
+run_close_ticket = _handle_ticket_close
+run_mark_paid = _handle_ticket_paid
+run_mark_completed = _handle_ticket_completed
+run_call_booster = _handle_ticket_call_booster
