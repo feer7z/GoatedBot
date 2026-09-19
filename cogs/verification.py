@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from config import EMBEDS_DIR
 from utils.layout_loader import load_layout_view
+from utils.panel_utils import post_panel
 from utils.permissions import staff_only
 
 
@@ -17,7 +18,7 @@ class Verification(commands.Cog):
     @staff_only()
     async def verification(self, interaction: discord.Interaction) -> None:
         view = load_layout_view(EMBEDS_DIR / "verification.json", timeout=None)
-        await interaction.response.send_message(view=view)
+        await post_panel(interaction, view)
 
 
 async def setup(bot: commands.Bot) -> None:
