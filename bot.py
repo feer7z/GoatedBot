@@ -17,7 +17,7 @@ from utils.ticket_actions import (
     review_prompt_callbacks,
     ticket_welcome_callbacks,
 )
-from utils.welcome_offers import welcome_panel_callbacks
+from utils.welcome_offers import cta_callbacks, welcome_panel_callbacks
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("goatedbot")
@@ -104,6 +104,27 @@ class GoatedBot(commands.Bot):
                 EMBEDS_NO_COMMANDS_DIR / "support_welcome.json",
                 values={"opener_mention": "", "topic": ""},
                 callbacks=support_ticket_callbacks(),
+                timeout=None,
+            )
+        )
+        self.add_view(
+            load_layout_view(
+                EMBEDS_NO_COMMANDS_DIR / "completed_post.json",
+                values={"completion_summary": ""},
+                callbacks=cta_callbacks(),
+                timeout=None,
+            )
+        )
+        self.add_view(
+            load_layout_view(
+                EMBEDS_NO_COMMANDS_DIR / "review_result.json",
+                values={
+                    "reviewer_mention": "",
+                    "order_type": "",
+                    "stars_display": "",
+                    "comment_block": "",
+                },
+                callbacks=cta_callbacks(),
                 timeout=None,
             )
         )

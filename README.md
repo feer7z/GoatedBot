@@ -148,20 +148,32 @@ attach a Railway Volume mounted at `/app/data`.
 
 ## 6. Commands
 
-All commands below except `/ping` are restricted to your `STAFFS_ID` roles —
-they post a panel (or, for `/giveaway`, start one) and are meant to be run by
-staff, not spammed by members.
+Panel-posting and giveaway commands are restricted to your `STAFFS_ID` roles.
+Ticket-management commands (`/close`, `/paid`, `/completed`, `/callbooster`)
+use the same checks as their matching buttons — `/close` works for anyone in
+the ticket, the rest need staff. `/ping` and `/offers` are open to everyone.
 
 | Command | What it does |
 |---|---|
-| `/ping` | Health check, open to everyone |
+| `/ping` | Reports gateway and response latency in ms |
 | `/verification` | Posts the RestoreCord verification button |
 | `/ranked` | Posts the Rank Carry / Rank Boost order panel |
 | `/prestiges` | Posts the Prestige Boost (Solo) / Prestige Carry (Duo) order panel |
 | `/other` | Posts the dropdown for Matcherino Pin, tournaments, Championship Challenge, winstreak boosts, and custom requests |
 | `/support` | Posts the support ticket panel (Ticket Tool style) |
-| `/giveaway prize duration winners` | Starts a giveaway that auto-ends and announces winners |
-| `/offers` | Open to everyone — resends the personalized starter-offers DM on demand |
+| `/giveaway prize duration winners [required_role]` | Starts a giveaway that auto-ends and announces winners |
+| `/offers` | Resends the personalized starter-offers DM to whoever runs it |
+| `/offer member` | Staff — sends the offers DM to one specific member |
+| `/offerall` | Staff — sends the offers DM to every member, one at a time with a short delay between each to respect Discord's rate limits |
+| `/close` | Same as the Close Ticket button |
+| `/paid` | Same as the Paid button |
+| `/completed` | Same as the Ticket Completed button |
+| `/callbooster` | Same as the Call a Booster button |
+
+Panel commands (`/ranked`, `/prestiges`, `/other`, `/verification`, `/support`)
+reply to the staff member privately and post the actual panel as a normal bot
+message — so the panel never shows Discord's "*Name* used `/command`" header
+above it.
 
 ## 7. How an order becomes a ticket
 
@@ -182,6 +194,20 @@ Tickets opened from the **welcome offers DM** (section 13) skip steps 2–4
 entirely — the offer already knows the tag, price, and service, so those
 tickets arrive fully filled in from the start.
 
+**Surviving a redeploy.** If `data/tickets.json` gets wiped by a Railway
+redeploy (see section 5), `/paid` and `/completed` — and their matching
+buttons — automatically rebuild a minimal record for any channel named
+`ticket-...` by reading who has channel access (skipping staff and boosters
+to find the actual client), so a ticket opened before the redeploy stays
+manageable. The one thing that doesn't come back is the original order
+details (price, brawler, etc.) — the recovered ticket just shows "Boost" as a
+placeholder, so double check pricing manually for tickets opened before the
+wipe.
+
+Both the **completed-orders post** and every **review result** end with a
+**Get Your Offer Now** button that opens the same tag modal as the welcome DM
+— a passive sales funnel for anyone browsing those channels.
+
 ## 8. Prestige orders: brawler-based, exact pricing
 
 Prestige orders no longer ask the customer to type their starting Prestige.
@@ -196,15 +222,23 @@ and the bot does the rest:
 **The Power 11 brawler-count discount only applies to `/ranked` orders now**
 (`P11_DISCOUNT_TIERS` in `utils/pricing.py`) — Prestige pricing no longer uses it.
 
-## 9. Important: what the Brawl Stars API can and can't tell the bot
+## 9. What the Brawl Stars API exposes (and how the bot uses it)
 
-The official Brawl Stars API **does not expose a player's current Ranked-mode
-tier** (Bronze–Masters) — only trophies, brawler power levels, club info, and
-similar account stats. Because of that, for `/ranked` orders specifically:
+Earlier versions of this README said the API couldn't expose a player's
+Ranked tier or win streak — that turned out to be wrong (likely added to the
+API after the docs Claude checked were last updated). Confirmed against real
+API responses, the player endpoint includes:
 
-- **Starting/Desired Rank are entered manually** by the customer in the order modal — there's no way around this with the public API today.
-- The API **is** used for the Power 11 brawler count, which drives the ranked discount tiers.
-- If a tag is invalid or the API call fails for a Ranked order, the order still goes through — the confirmation just shows "Account Lookup — Unavailable" instead of blocking the customer, since Ranked pricing doesn't depend on the API the way Prestige pricing now does.
+- `rankedRank` (an integer position) and `rankedRankName` (e.g. `"MYTHIC I"`) — the account's **current-season** Ranked standing. `rankedRank` lines up exactly with `RANK_TIERS` in `utils/pricing.py` (Mythic I is position 13, Masters I is 19, etc.), so `get_current_ranked_tier()` uses the number directly and only falls back to parsing the name string if it's missing.
+- Per-brawler `maxWinStreak` — each brawler's best-ever win streak, used for the Winstreak Boost offer.
+- Per-brawler `prestigeLevel` — the account's already-computed Prestige level; the bot still derives it independently from `trophies` (see section 8) since that keeps pricing based on one source of truth, but the two should always agree.
+
+Because of this:
+
+- **`/ranked` auto-detects the starting rank** the same way `/prestiges` auto-detects starting trophies — the modal only asks for the *desired* rank. If an account hasn't played a Ranked match this season (`rankedRank`/`rankedRankName` absent), the order is blocked with a clear message asking them to play one first, rather than guessing.
+- **Winstreak Boost** (in `/other` and in the welcome offers) auto-detects the account's best current streak from whichever brawler holds it, and prices reaching the next multiple of 100 — exactly the "beat your record, multiple of 100" idea from the original spec, just pointed at the right stat (`maxWinStreak`, not cumulative victories).
+- The Power 11 brawler count is still used only for the `/ranked` discount tiers (`P11_DISCOUNT_TIERS`), unrelated to any of the above.
+- If the account lookup itself fails (bad tag, API/proxy down), Ranked, Prestige, and Winstreak orders are all blocked with a clear error rather than falling back to a guess — consistent with the "exact price or nothing" approach used throughout.
 
 ## 10. Pricing — you need to tune this
 
@@ -277,16 +311,11 @@ join DM was missed or they just want to check again), the bot DMs them a
 player tag — required, since every offer below is calculated from their real
 account data, not a guess:
 
-- **🏆 Victory Milestone** — reads `3vs3Victories` and offers to boost them to
-  the next multiple of 100 (e.g. 847 → 900), priced with the same per-win rate
-  as the `winstreak_boost` entry in `OTHER_SERVICE_OPTIONS`, so it stays in
-  sync with that price automatically.
+- **🏆 Winstreak Boost** — finds whichever brawler holds the account's best `maxWinStreak` and offers to beat it up to the next multiple of 100 (e.g. a 142-win record → priced to reach 200), using the same rate as the `winstreak_boost` entry in `OTHER_SERVICE_OPTIONS`. Skipped entirely if no brawler has a win streak yet.
 - **⭐ Prestige Push** — finds whichever of their brawlers has the *smallest*
   trophy gap left before Prestige 3 and prices it with the exact same
   `calculate_prestige_price` function `/prestiges` uses.
-- **🎯 Ranked Push** — since the API can't read a Ranked tier (see the section
-  above), this one is a plain "open a ticket and we'll quote you" card with no
-  price attached, rather than a guess.
+- **🎯 Ranked Push** — reads their current-season rank (`rankedRank`/`rankedRankName`) and prices pushing exactly one tier up, using the same `calculate_rank_price` function `/ranked` uses. If the account hasn't played Ranked this season yet, this becomes a plain "open a ticket and tell us your rank" card instead, since there's nothing to read.
 
 Each card's **Order This** (or **Ask About Ranked**) button creates a ticket
 directly — no extra confirmation step, since clicking it *is* the acceptance,
@@ -303,8 +332,9 @@ who didn't get it.
 
 - **Watermark**: replace `assets/watermark.png` with your real logo (transparent PNG recommended). It's stamped in the bottom-right corner of every completion screenshot.
 - **Ticket category**: set `TICKET_CATEGORY_ID` (orders) or `SUPPORT_CATEGORY_ID` (support) in `config.py` if you want ticket channels created inside a specific category.
-- **Rank list**: `RANK_TIERS` in `utils/pricing.py` reflects the current Bronze → Masters ladder. Update it if Supercell changes the ranked system.
+- **Rank list**: `RANK_TIERS` in `utils/pricing.py` reflects the current Bronze → Pro ladder (Bronze–Legendary have 3 tiers each, Masters has 3, Pro is a single top rank — 22 total). Update it if Supercell changes the ranked system.
 - **Support survey destination**: both order reviews and support-ticket surveys currently post to `REVIEWS_CHANNEL_ID`. Point support feedback elsewhere by adding a second channel constant and passing it through `_send_satisfaction_survey` in `utils/support_actions.py` if you'd rather keep them separate.
+- **Emojis**: every custom emoji the bot uses (ranks, Prestige levels, P11, payment method, etc.) lives in one place, `utils/emojis.py`. Each is a plain `<:name:id>` string constant — to change one, edit its ID there; nothing else needs to change. `rank_emoji()`, `prestige_emoji()`, and `service_emoji()` map names/numbers to the right constant automatically, and `field()` builds one `emoji **Label** — value` line, which is what every order summary, completed post, and review is built from.
 
 ## 15. Troubleshooting
 
